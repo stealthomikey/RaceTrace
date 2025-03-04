@@ -52,19 +52,20 @@
                     <div class="hero-inner">
                         <h1 class="hero-title h2-mobile mt-0 is-revealing">Welcome to Digital Sandwich</h1>
                         <p class="hero-paragraph is-revealing">Launching soon! Go karting live telemetry data with detailed playback.</p>
-                        <form method="POST" action="https://script.google.com/macros/s/AKfycbzpoAzqkxjQ0CTGLmpts5keb8ot75ifJqNHOpJCZXRNu2s7E3wLrTNGnh61OhMxWjt2Kg/exec
-                        ">
-                        <div class="hero-form newsletter-form field field-grouped is-revealing">
-                            <div class="control control-expanded">
-                                <input class="input" name="Name" type="text" placeholder="Name">
-                                <input class="input" type="email" name="Email" placeholder="Your best email&hellip;">
-                                
+                        <form id="gform">
+                            <div class="hero-form newsletter-form field field-grouped is-revealing">
+                                <div class="control control-expanded">
+                                    <input class="input" name="Name" type="text" placeholder="Name" required>
+                                    <input class="input" type="email" name="Email" placeholder="Your best email…" required>
+                                </div>
+                                <div class="control">
+                                    <button class="button button-primary button-block button-shadow" type="submit">Get early access</button>
+                                </div>
                             </div>
-                            <div class="control">
-                                <button class="button button-primary button-block button-shadow" type="submit">Get early access</button>
-                            </div>
-                        </div>
                         </form>
+                        
+                        <p id="responseMessage" style="display: none; color: green;">Thank you! Your submission has been received.</p>
+                        
                         <div class="hero-browser">
                             <img src="concept.jpeg">
                         </div>
@@ -226,5 +227,25 @@
     </div>
 
     <script src="dist/js/main.min.js"></script>
+
+<script>
+    document.getElementById("gform").addEventListener("submit", function(event) {
+        event.preventDefault(); // Prevent default form submission
+
+        let formData = new FormData(this);
+        let url = "https://script.google.com/macros/s/AKfycbzpoAzqkxjQ0CTGLmpts5keb8ot75ifJqNHOpJCZXRNu2s7E3wLrTNGnh61OhMxWjt2Kg/exec";
+
+        fetch(url, {
+            method: "POST",
+            body: formData,
+        })
+        .then(response => response.json())
+        .then(data => {
+            document.getElementById("responseMessage").style.display = "block"; // Show success message
+            document.getElementById("gform").reset(); // Clear form
+        })
+        .catch(error => console.error("Error!", error.message));
+    });
+</script>
 </body>
 </html>
