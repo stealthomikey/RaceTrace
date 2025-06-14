@@ -1,0 +1,380 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Race Session Discovery - RaceTrace</title>
+    <link rel="icon" href="../textures/logo.PNG" type="image/x-icon">
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            margin: 0;
+            padding: 0;
+            background-color: #eef1f5; /* Lighter background */
+            color: #333;
+        }
+
+        .container {
+            width: 90%;
+            max-width: 1200px; /* Max width for larger screens */
+            margin: auto;
+            overflow: hidden;
+            padding: 0 20px;
+        }
+
+        header {
+            background: #2c3e50; /* Darker, more modern blue */
+            color: #ecf0f1; /* Light grey text */
+            padding: 1.5rem 0;
+            text-align: center;
+            border-bottom: #e74c3c 4px solid; /* Contrasting accent color */
+        }
+
+        header h1 {
+            margin: 0;
+            font-size: 2.8rem;
+            letter-spacing: 1px;
+        }
+
+        header h2 {
+            margin: 0.5rem 0 0;
+            font-size: 1.3rem;
+            font-weight: 300; /* Lighter font weight */
+            color: #bdc3c7; /* Softer grey */
+        }
+
+        main {
+            padding: 25px;
+            background: #ffffff;
+            margin-top: 25px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.08);
+            border-radius: 8px;
+        }
+
+        .intro-text {
+            margin-bottom: 20px;
+            font-size: 1.1em;
+            color: #555;
+            text-align: center;
+        }
+
+        #sessionSearchForm {
+            margin-bottom: 35px;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); /* Responsive grid */
+            gap: 20px; /* Space between grid items */
+        }
+
+        .form-group {
+            margin-bottom: 0; /* Handled by grid gap */
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600; /* Slightly bolder label */
+            color: #34495e; /* Dark blue-grey label text */
+        }
+
+        .form-group input[type="date"],
+        .form-group input[type="time"],
+        .form-group input[type="text"] {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            box-sizing: border-box;
+            font-size: 1em;
+            transition: border-color 0.3s ease;
+        }
+
+        .form-group input[type="date"]:focus,
+        .form-group input[type="time"]:focus,
+        .form-group input[type="text"]:focus {
+            border-color: #e74c3c; /* Accent color on focus */
+            outline: none;
+        }
+
+        .search-button-container {
+            grid-column: 1 / -1; /* Span full width in grid */
+            text-align: center;
+            margin-top: 10px;
+        }
+
+        .search-button {
+            display: inline-block;
+            background: #e74c3c; /* Accent color */
+            color: #fff;
+            padding: 12px 30px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 1.2em;
+            font-weight: 500;
+            transition: background-color 0.3s ease, transform 0.2s ease;
+        }
+
+        .search-button:hover {
+            background: #c0392b; /* Darker accent */
+            transform: translateY(-2px);
+        }
+
+        .search-results-section {
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 1px solid #e0e0e0;
+        }
+
+        .search-results-section h3 {
+            color: #2c3e50;
+            margin-bottom: 20px;
+            text-align: center;
+            font-size: 1.8rem;
+        }
+
+        .session-item {
+            background: #f9f9f9;
+            border: 1px solid #e0e0e0;
+            margin-bottom: 20px;
+            border-radius: 8px;
+            display: flex; /* Using flexbox for layout */
+            min-height: 180px; /* Minimum height for items */
+            overflow: hidden; /* To contain border radius for children */
+            box-shadow: 0 3px 10px rgba(0,0,0,0.05);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .session-item:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 6px 15px rgba(0,0,0,0.1);
+        }
+
+        .session-image {
+            flex: 0 0 40%; /* Image takes up 40% of the width */
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+            border-right: 1px solid #e0e0e0;
+        }
+
+        .session-info {
+            flex: 1; /* Text info takes remaining space */
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+
+        .session-info p {
+            margin: 0 0 8px 0;
+            color: #444;
+            font-size: 0.95em;
+        }
+        .session-info p strong {
+            color: #2c3e50;
+        }
+
+
+        .view-playback-button {
+            display: inline-block;
+            background: #27ae60; /* Green for action */
+            color: #fff;
+            padding: 10px 18px;
+            text-decoration: none;
+            border-radius: 5px;
+            margin-top: 10px;
+            font-size: 1em;
+            font-weight: 500;
+            text-align: center;
+            align-self: flex-start; /* Align button to the start of the flex container */
+            transition: background-color 0.3s ease, transform 0.2s ease;
+        }
+
+        .view-playback-button:hover {
+            background: #229954; /* Darker green */
+            transform: translateY(-1px);
+        }
+
+        .no-results p {
+            color: #777;
+            font-style: italic;
+            text-align: center;
+            padding: 20px;
+            background-color: #fff3cd; /* Light yellow for warning */
+            border: 1px solid #ffeeba;
+            border-radius: 5px;
+        }
+
+        footer {
+            text-align: center;
+            padding: 25px;
+            margin-top: 30px;
+            background: #2c3e50;
+            color: #ecf0f1;
+            font-size: 0.9em;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>RaceTrace</h1>
+            <h2>Race Session Discovery</h2>
+        </header>
+
+        <main>
+            <p class="intro-text">
+                Search for a track by name or location, then specify the date, time, or heat to find your race session.
+            </p>
+
+            <form id="sessionSearchForm">
+                <div class="form-group">
+                    <label for="trackName">Track Name:</label>
+                    <input type="text" id="trackName" name="trackName" placeholder="e.g., Grand Prix Circuit">
+                </div>
+
+                <div class="form-group">
+                    <label for="trackLocation">Track Location:</label>
+                    <input type="text" id="trackLocation" name="trackLocation" placeholder="e.g., London or Postal Code">
+                </div>
+
+                <div class="form-group">
+                    <label for="raceDate">Date of Race:</label>
+                    <input type="date" id="raceDate" name="raceDate">
+                </div>
+
+                <div class="form-group">
+                    <label for="raceTime">Approximate Time:</label>
+                    <input type="time" id="raceTime" name="raceTime">
+                </div>
+
+                <div class="form-group">
+                    <label for="heatNumber">Heat Number (if known):</label>
+                    <input type="text" id="heatNumber" name="heatNumber" placeholder="e.g., Heat 3">
+                </div>
+
+                <div class="form-group">
+                    <label for="racerId">Racer ID / Name (if provided):</label>
+                    <input type="text" id="racerId" name="racerId" placeholder="e.g., RCR123 or Your Name">
+                </div>
+                <div class="search-button-container">
+                    <button type="submit" class="search-button">Find My Session</button>
+                </div>
+            </form>
+
+            
+
+            <section id="searchResults" class="search-results-section">
+                <h3>Your Race Sessions:</h3>
+                
+                <div class="session-item">
+                    <div class="session-image" style="background-image: url('https://www.grandprix247.com/wp-content/uploads/2019/11/EJQrG_ZUcAAfVUy.jpg');">
+                        </div>
+                    <div class="session-info">
+                        <div>
+                            <p><strong>Track:</strong> Interlagos Circuit</p>
+                            <p><strong>Location:</strong>São Paulo</p>
+                            <p><strong>Date:</strong> 03-11-2024 | <strong>Time:</strong> 15:30 | <strong>Heat:</strong> 5</p>
+                            <p><strong>Racers:</strong>Lewis Hamilton, Max Verstappen, Charles Leclerc</p>
+                        </div>
+                        <a href="../brazil.html" class="view-playback-button">View 3D Playback</a>
+                    </div>
+                </div>
+
+                
+                <div class="session-item">
+                    <div class="session-image" style="background-image: url('https://static01.nyt.com/images/2019/07/13/sports/13sp-silverstone-inyt1/merlin_157516356_009c6be7-3977-4ad6-b4bc-52d2addf96e1-superJumbo.jpg');">
+                        </div>
+                    <div class="session-info">
+                        <div>
+                            <p><strong>Track:</strong> Silverstone</p>
+                            <p><strong>Location:</strong>Northamptonshire </p>
+                            <p><strong>Date:</strong> 07-07-2024 | <strong>Time:</strong> 15:00 | <strong>Heat:</strong> 2</p>
+                            <p><strong>Racers:</strong>Lewis Hamilton, Max Verstappen, Charles Leclerc</p>
+                        </div>
+                        <a href="../" class="view-playback-button">View 3D Playback</a>
+                    </div>
+                </div>
+
+                <div class="session-item">
+                    <div class="session-image" style="background-image: url('https://flhq.co.uk/wp-content/uploads/2024/10/WhatsApp-Image-2024-10-09-at-23.14.09_5122e0b0.jpg');">
+                        </div>
+                    <div class="session-info">
+                        <div>
+                            <p><strong>Track:</strong> Fastlane</p>
+                            <p><strong>Location:</strong>Aberdeen</p>
+                            <p><strong>Date:</strong> 2025-06-04 | <strong>Time:</strong> 14:30 | <strong>Heat:</strong> 2</p>
+                            <p><strong>Racers:</strong>Michael, Callum, Jonathan, Juliusz</p>
+                        </div>
+                        <a href="session.html" class="view-playback-button">View 3D Playback</a>
+                    </div>
+                </div>
+                
+                <div class="session-item">
+                    <div class="session-image" style="background-image: url('https://media.formula1.com/image/upload/f_auto/q_auto/v1688642005/fom-website/2023/Britain/silverstone-grid-2022.png');">
+                        </div>
+                    <div class="session-info">
+                        <div>
+                            <p><strong>Track:</strong> Adrenaline Alley Karting</p>
+                            <p><strong>Location:</strong> Manchester</p>
+                            <p><strong>Date:</strong> 2025-06-03 | <strong>Time:</strong> 17:00 | <strong>Heat:</strong> 5</p>
+                            <p><strong>Racers:</strong> You, Racer X, Racer Y, Racer Z</p>
+                        </div>
+                        <a href="#" class="view-playback-button">View 3D Playback</a>
+                    </div>
+                </div>
+
+                <div class="session-item">
+                    <div class="session-image" style="background-image: url('https://flhq.co.uk/wp-content/uploads/2024/10/WhatsApp-Image-2024-10-09-at-23.14.09_5122e0b0.jpg');">
+                        </div>
+                    <div class="session-info">
+                        <div>
+                            <p><strong>Track:</strong> Pro Karting Arena</p>
+                            <p><strong>Location:</strong> Silverstone</p>
+                            <p><strong>Date:</strong> 2025-06-04 | <strong>Time:</strong> 14:30 | <strong>Heat:</strong> 2</p>
+                            <p><strong>Racers:</strong> You, Racer B, Racer C</p>
+                        </div>
+                        <a href="session.html" class="view-playback-button">View session info</a>
+                    </div>
+                </div>
+
+                <div class="session-item">
+                    <div class="session-image" style="background-image: url('https://media.formula1.com/image/upload/f_auto/q_auto/v1688642005/fom-website/2023/Britain/silverstone-grid-2022.png');">
+                        </div>
+                    <div class="session-info">
+                        <div>
+                            <p><strong>Track:</strong> Adrenaline Alley Karting</p>
+                            <p><strong>Location:</strong> Manchester</p>
+                            <p><strong>Date:</strong> 2025-06-03 | <strong>Time:</strong> 17:00 | <strong>Heat:</strong> 5</p>
+                            <p><strong>Racers:</strong> You, Racer X, Racer Y, Racer Z</p>
+                        </div>
+                        <a href="#" class="view-playback-button">View 3D Playback</a>
+                    </div>
+                </div>
+
+                <div class="no-results" style="display: none;"> <p>No sessions found matching your criteria. Please try again or contact venue staff.</p>
+                </div>
+            </section>
+        </main>
+
+        <footer>
+            <p>&copy; 2025 RaceTrace. Empowering your race!</p>
+        </footer>
+    </div>
+
+    <script>
+        // Basic JavaScript to prevent actual form submission for this example
+        document.getElementById('sessionSearchForm').addEventListener('submit', function(event) {
+            event.preventDefault();
+            alert('Search functionality would be implemented here! Results would be dynamically loaded.');
+            
+            // Example: To show the "no results" message (you'd have logic for this)
+            // document.querySelector('.no-results').style.display = 'block';
+
+            // Example: To hide existing results if you were to populate new ones
+            // document.querySelectorAll('.session-item').forEach(item => item.style.display = 'none');
+        });
+    </script>
+</body>
+</html>

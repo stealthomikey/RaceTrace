@@ -1,0 +1,488 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Performance Progression - RaceTrace</title>
+    <style>
+        /* Global Page Styles (consistent with previous pages) */
+        body {
+            font-family: 'DM Sans', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            margin: 0;
+            padding: 0;
+            background-color: #eef1f5;
+            color: #333;
+            font-size: 1.6rem; /* Default font size 16px */
+        }
+
+        html {
+            box-sizing: border-box;
+            font-size: 62.5%; /* 1rem = 10px */
+        }
+
+        *, *:before, *:after {
+            box-sizing: inherit;
+        }
+
+        .main-container {
+            width: 90%;
+            max-width: 1100px; /* Slightly wider for more content */
+            margin: auto;
+            overflow: hidden;
+            padding: 0 2rem;
+        }
+
+        .page-header {
+            background: #2c3e50;
+            color: #ecf0f1;
+            padding: 1.5rem 0;
+            text-align: center;
+            border-bottom: #e74c3c 4px solid;
+        }
+
+        .page-header h1 {
+            margin: 0;
+            font-size: 2.8rem;
+            letter-spacing: 1px;
+        }
+
+        .page-header h2 { /* Though not used directly in this page's header, kept for consistency */
+            margin: 0.5rem 0 0;
+            font-size: 1.5rem;
+            font-weight: 300;
+            color: #bdc3c7;
+        }
+        
+        main {
+            padding: 2.5rem;
+            background: #ffffff;
+            margin-top: 2.5rem;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.08);
+            border-radius: 8px;
+        }
+
+        .page-footer {
+            text-align: center;
+            padding: 2.5rem;
+            margin-top: 3rem;
+            background: #2c3e50;
+            color: #ecf0f1;
+            font-size: 1.4rem;
+        }
+
+        /* Profile Header Section */
+        .profile-header {
+            text-align: center;
+            margin-bottom: 3rem;
+            padding-bottom: 2rem;
+            border-bottom: 1px solid #e0e0e0;
+        }
+        .profile-avatar {
+            width: 120px;
+            height: 120px;
+            border-radius: 50%;
+            border: 3px solid #e74c3c;
+            margin-bottom: 1rem;
+            object-fit: cover; /* Ensures image covers well */
+        }
+        .profile-header h1 {
+            font-size: 2.8rem;
+            color: #2c3e50;
+            margin-bottom: 0.5rem;
+        }
+        .profile-header p {
+            font-size: 1.6rem;
+            color: #555;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        /* Track Selection */
+        .track-selection-section {
+            margin-bottom: 3rem;
+            text-align: center;
+        }
+        .track-selection-section label {
+            font-size: 1.8rem;
+            font-weight: 600;
+            color: #34495e;
+            margin-right: 1rem;
+        }
+        #track-select {
+            padding: 1rem 1.5rem;
+            font-size: 1.6rem;
+            border-radius: 5px;
+            border: 1px solid #ccc;
+            min-width: 300px;
+            background-color: #fff;
+        }
+
+        /* General Section Styling for Track Performance Content */
+        #track-performance-content section {
+            margin-bottom: 3.5rem;
+            padding: 2rem;
+            background-color: #fdfdfd;
+            border-radius: 8px;
+            border: 1px solid #e8e8e8;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+        }
+        #track-performance-content h2 {
+            font-size: 2.2rem;
+            color: #2c3e50;
+            margin-top: 0;
+            margin-bottom: 1.5rem;
+            padding-bottom: 1rem;
+            border-bottom: 1px solid #e0e0e0;
+        }
+        
+        /* Track Summary Stats */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1.5rem;
+        }
+        .stats-grid > div {
+            background-color: #f9f9f9;
+            padding: 1.5rem;
+            border-radius: 6px;
+            border: 1px solid #eee;
+            text-align: center;
+        }
+        .stats-grid > div strong {
+            display: block;
+            font-size: 1.5rem;
+            color: #555;
+            margin-bottom: 0.5rem;
+        }
+        .stats-grid > div span {
+            font-size: 2rem;
+            font-weight: 700;
+            color: #e74c3c;
+        }
+
+        /* Performance Graphs */
+        .graph-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 2rem;
+        }
+        .graph-placeholder {
+            border: 1px dashed #ccc;
+            padding: 2rem;
+            min-height: 250px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            background-color: #f9f9f9;
+            border-radius: 6px;
+        }
+        .graph-placeholder p {
+            font-size: 1.6rem;
+            color: #777;
+        }
+
+        /* Session History */
+        .session-history-list {
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+        }
+        .session-history-item {
+            background-color: #fff;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            padding: 1.5rem;
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: space-between;
+            align-items: center;
+            transition: box-shadow 0.3s ease;
+        }
+        .session-history-item:hover {
+            box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+        }
+
+        .session-item-main-info {
+            flex-basis: 100%; /* Full width on small screens */
+            margin-bottom: 1rem;
+        }
+         @media (min-width: 768px) {
+            .session-item-main-info {
+                flex-basis: auto; /* Auto width on larger screens */
+                margin-bottom: 0;
+            }
+        }
+
+        .session-item-main-info .session-date {
+            font-size: 1.6rem;
+            font-weight: 600;
+            color: #333;
+            display: block;
+        }
+        .session-item-main-info .session-type {
+            font-size: 1.4rem;
+            color: #555;
+            background-color: #eef1f5;
+            padding: 0.3rem 0.8rem;
+            border-radius: 10px;
+            display: inline-block;
+            margin-top: 0.5rem;
+        }
+        .session-item-performance {
+            flex-grow: 1;
+            padding: 0 1.5rem; /* Add some padding between sections */
+            font-size: 1.5rem;
+        }
+         @media (max-width: 767px) {
+            .session-item-performance {
+                padding: 1rem 0;
+                flex-basis: 100%;
+            }
+        }
+        .session-item-performance p {
+            margin: 0.5rem 0;
+        }
+        .session-item-actions {
+            display: flex;
+            flex-direction: column; /* Stack buttons on small screens */
+            align-items: flex-start; /* Align to start */
+            gap: 0.8rem; /* Space between buttons */
+        }
+         @media (min-width: 500px) {
+            .session-item-actions {
+                flex-direction: row; /* Row on larger screens */
+                align-items: center;
+            }
+        }
+
+
+        .details-link, .playback-link-small {
+            text-decoration: none;
+            padding: 0.8rem 1.2rem;
+            border-radius: 5px;
+            font-size: 1.4rem;
+            font-weight: 500;
+            text-align: center;
+            transition: background-color 0.3s ease;
+            display: inline-block; /* Ensure it takes padding */
+        }
+        .details-link {
+            background-color: #5bc0de; /* Info blue */
+            color: white;
+        }
+        .details-link:hover {
+            background-color: #31b0d5;
+        }
+        .playback-link-small {
+            background-color: #27ae60; /* Green */
+            color: white;
+        }
+        .playback-link-small:hover {
+            background-color: #229954;
+        }
+
+        /* Race Event History */
+        .event-item {
+            background-color: #fff;
+            border: 1px solid #ddd;
+            padding: 1.5rem;
+            border-radius: 6px;
+            margin-bottom: 1rem;
+        }
+        .event-item h4 {
+            font-size: 1.8rem;
+            color: #34495e;
+            margin-top:0;
+            margin-bottom: 0.8rem;
+        }
+        .event-item p {
+            font-size: 1.5rem;
+            margin: 0.4rem 0;
+        }
+        .event-item a {
+            color: #e74c3c;
+            text-decoration: none;
+            font-weight: 500;
+            font-size: 1.5rem;
+        }
+        .event-item a:hover {
+            text-decoration: underline;
+        }
+
+    </style>
+</head>
+<body>
+
+    <div class="main-container">
+        <header class="page-header">
+            <h1>RaceTrace</h1>
+            </header>
+
+        <main>
+            <section class="profile-header">
+                <img src="https://via.placeholder.com/120/E74C3C/FFFFFF?text=User" alt="User Avatar" class="profile-avatar">
+                <h1>John Doe's Performance Progression</h1>
+                <p>Track your improvement, analyze past races, and relive your best moments on the track!</p>
+            </section>
+
+            <section class="track-selection-section">
+                <label for="track-select">Select a Track:</label>
+                <select id="track-select" name="track-select" onchange="loadTrackData(this.value)">
+                    <option value="">-- Choose a Track --</option>
+                    <option value="fastlane_aberdeen">Fastlane - Aberdeen</option>
+                    <option value="pro_kart_silverstone">Pro Karting Arena - Silverstone</option>
+                    <option value="adrenaline_manchester">Adrenaline Alley - Manchester</option>
+                </select>
+            </section>
+
+            <div id="track-performance-content">
+                <section class="track-summary-stats">
+                    <h2>Performance Summary for <span id="selectedTrackName">Fastlane - Aberdeen</span></h2>
+                    <div class="stats-grid">
+                        <div><strong>Total Visits:</strong> <span id="totalVisits">5</span></div>
+                        <div><strong>Best Ever Lap:</strong> <span id="bestEverLap">0:42.950</span></div>
+                        <div><strong>Total Laps Driven:</strong> <span id="totalLaps">120</span></div>
+                        <div><strong>Avg. Finishing Position:</strong> <span id="avgPosition">2nd</span></div>
+                    </div>
+                </section>
+
+                <section class="performance-graphs">
+                    <h2>Improvement Graphs for <span id="selectedTrackNameGraph">Fastlane - Aberdeen</span></h2>
+                    <div class="graph-container">
+                        <div class="graph-placeholder" id="lapTimeGraph">
+                            <p>Best Lap Time per Session (Graph)</p>
+                            </div>
+                        <div class="graph-placeholder" id="positionGraph">
+                            <p>Finishing Position per Race (Graph)</p>
+                            </div>
+                    </div>
+                </section>
+
+                <section class="session-history">
+                    <h2>Session History at <span id="selectedTrackNameHistory">Fastlane - Aberdeen</span></h2>
+                    <div class="session-history-list">
+                        <div class="session-history-item">
+                            <div class="session-item-main-info">
+                                <span class="session-date">June 4, 2025 - 14:30</span>
+                                <span class="session-type">Heat 2 (Race)</span>
+                            </div>
+                            <div class="session-item-performance">
+                                <p><strong>Your Best Lap:</strong> 0:44.105</p>
+                                <p><strong>Position:</strong> 1st / 8 racers</p>
+                                <p><strong>Laps:</strong> 12</p>
+                            </div>
+                            <div class="session-item-actions">
+                                <a href="#" class="details-link" onclick="alert('Link to full results for this session'); return false;">Full Results</a>
+                                <a href="#" class="playback-link-small" onclick="alert('Link to playback for session on June 4'); return false;">Session Playback</a>
+                            </div>
+                        </div>
+                        <div class="session-history-item">
+                            <div class="session-item-main-info">
+                                <span class="session-date">May 28, 2025 - 18:00</span>
+                                <span class="session-type">Practice Session</span>
+                            </div>
+                            <div class="session-item-performance">
+                                <p><strong>Your Best Lap:</strong> 0:42.950 (PB!)</p>
+                                <p><strong>Position:</strong> N/A (Practice)</p>
+                                <p><strong>Laps:</strong> 25</p>
+                            </div>
+                            <div class="session-item-actions">
+                                <a href="#" class="details-link" onclick="alert('Link to full results for this session'); return false;">Full Results</a>
+                                <a href="#" class="playback-link-small" onclick="alert('Link to playback for session on May 28'); return false;">Session Playback</a>
+                            </div>
+                        </div>
+                         <div class="session-history-item">
+                            <div class="session-item-main-info">
+                                <span class="session-date">May 15, 2025 - 19:30</span>
+                                <span class="session-type">Heat 1 (Race)</span>
+                            </div>
+                            <div class="session-item-performance">
+                                <p><strong>Your Best Lap:</strong> 0:44.800</p>
+                                <p><strong>Position:</strong> 3rd / 7 racers</p>
+                                <p><strong>Laps:</strong> 10</p>
+                            </div>
+                            <div class="session-item-actions">
+                                <a href="#" class="details-link" onclick="alert('Link to full results for this session'); return false;">Full Results</a>
+                                <a href="#" class="playback-link-small" onclick="alert('Link to playback for session on May 15'); return false;">Session Playback</a>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <section class="race-event-history">
+                    <h2>Competitive Event History at <span id="selectedTrackNameEvents">Fastlane - Aberdeen</span></h2>
+                    <div class="event-item">
+                         <h4>Summer Sizzler Cup - Round 3 (June 1, 2025)</h4>
+                         <p><strong>Overall Position:</strong> 2nd / 15 entrants</p>
+                         <p><strong>Points Gained:</strong> 18</p>
+                         <a href="#" onclick="alert('Link to full event page for Summer Sizzler Cup'); return false;">View Event Standings & Details</a>
+                    </div>
+                    <div class="event-item">
+                         <h4>Spring Open Challenge (April 20, 2025)</h4>
+                         <p><strong>Overall Position:</strong> 5th / 22 entrants</p>
+                         <p><strong>Points Gained:</strong> 10</p>
+                         <a href="#" onclick="alert('Link to full event page for Spring Open Challenge'); return false;">View Event Standings & Details</a>
+                    </div>
+                     <div id="noEventsMessage" style="display:none;">
+                        <p>No competitive events recorded at this track yet.</p>
+                    </div>
+                </section>
+            </div> </main>
+
+        <footer class="page-footer">
+            <p>&copy; 2025 RaceTrace. Track. Analyze. Improve.</p>
+        </footer>
+    </div>
+
+    <script>
+        // Placeholder function to simulate loading data for the selected track
+        function loadTrackData(trackValue) {
+            if (!trackValue) {
+                // Clear content or show a "select a track" message
+                document.getElementById('track-performance-content').style.display = 'none';
+                return;
+            }
+            document.getElementById('track-performance-content').style.display = 'block';
+
+            // Simulate fetching data for the selected track
+            // In a real app, you'd make an AJAX call here
+            const trackName = document.querySelector(`#track-select option[value='${trackValue}']`).textContent;
+            
+            document.getElementById('selectedTrackName').textContent = trackName;
+            document.getElementById('selectedTrackNameGraph').textContent = trackName;
+            document.getElementById('selectedTrackNameHistory').textContent = trackName;
+            document.getElementById('selectedTrackNameEvents').textContent = trackName;
+
+            // Example: Update stats (these would come from your backend)
+            if (trackValue === 'fastlane_aberdeen') {
+                document.getElementById('totalVisits').textContent = '5';
+                document.getElementById('bestEverLap').textContent = '0:42.950';
+                document.getElementById('totalLaps').textContent = '120';
+                document.getElementById('avgPosition').textContent = '2nd';
+                // Show/hide example sessions and events for this track
+            } else if (trackValue === 'pro_kart_silverstone') {
+                document.getElementById('totalVisits').textContent = '3';
+                document.getElementById('bestEverLap').textContent = '0:55.123';
+                document.getElementById('totalLaps').textContent = '70';
+                document.getElementById('avgPosition').textContent = '4th';
+            } else {
+                // Default/clear for other tracks or show "No data"
+                document.getElementById('totalVisits').textContent = 'N/A';
+                document.getElementById('bestEverLap').textContent = 'N/A';
+                document.getElementById('totalLaps').textContent = 'N/A';
+                document.getElementById('avgPosition').textContent = 'N/A';
+            }
+            
+            // Here you would also update the graph placeholders and session history list
+            // with actual data fetched for the selected track.
+            alert(`Data for ${trackName} would be loaded here, including graphs and session history.`);
+        }
+
+        // Initially hide the track-specific content until a track is selected
+        document.getElementById('track-performance-content').style.display = 'none';
+    </script>
+
+</body>
+</html>

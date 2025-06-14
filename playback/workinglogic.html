@@ -1,0 +1,1232 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RaceTrace - Playback</title>
+    <style>
+        /* --- Global & Session Page Styles (from session.html) --- */
+        @import url("https://fonts.googleapis.com/css?family=DM+Sans:400,700&display=swap");
+
+        :root {
+            --black: 0;
+            --white: 255;
+            --theme: var(--black);
+            --theme-invert: var(--white);
+            
+            --base-full: rgba(var(--theme),var(--theme),var(--theme),1);
+            --base-80: rgba(var(--theme),var(--theme),var(--theme),0.8);
+            --base-60: rgba(var(--theme),var(--theme),var(--theme),0.6);
+            --base-40: rgba(var(--theme),var(--theme),var(--theme),0.4);
+            --base-20: rgba(var(--theme),var(--theme),var(--theme),0.2);
+            --base-5: rgba(var(--theme),var(--theme),var(--theme),0.05);
+            
+            --invert-full: rgba(var(--theme-invert),var(--theme-invert),var(--theme-invert),1);
+
+            --red: #EE3F46;
+            --green: #27B768;
+            --first: #F5CD75;
+            --second: var(--base-60);
+            --third: #C6906B;
+        }
+
+        html {
+            box-sizing: border-box;
+            font-size: 62.5%;
+        }
+
+        *, *:before, *:after {
+            box-sizing: inherit;
+        }
+
+        body {
+            font-family: 'DM Sans', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            margin: 0;
+            padding: 0;
+            background-color: #eef1f5;
+            color: #333;
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+            animation: fadeIn 1s ease-in;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        .page-header {
+            background: #2c3e50;
+            color: #ecf0f1;
+            padding: 1.5rem 0;
+            text-align: center;
+            border-bottom: #e74c3c 4px solid;
+        }
+
+        .page-header h1 {
+            margin: 0;
+            font-size: 2.8rem;
+            letter-spacing: 1px;
+        }
+
+        .page-footer {
+            text-align: center;
+            padding: 2.5rem;
+            margin-top: auto; /* Pushes footer to bottom */
+            background: #2c3e50;
+            color: #ecf0f1;
+            font-size: 1.4rem;
+        }
+
+        .main-container {
+            width: 95%;
+            max-width: 1400px; /* Increased max-width for this layout */
+            margin: auto;
+            padding: 20px;
+            flex-grow: 1;
+        }
+        
+        main {
+            padding: 2.5rem;
+            background: #ffffff;
+            margin-top: 2.5rem;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.08);
+            border-radius: 8px;
+            display: flex;
+            flex-direction: column; /* Mobile-first: stack elements */
+            gap: 2.5rem;
+        }
+
+        @media (min-width: 992px) {
+            main {
+                flex-direction: row; /* Side-by-side on larger screens */
+            }
+        }
+        
+        /* --- Leaderboard & Visualization Layout --- */
+        .playback-area {
+            flex: 3 1 700px;
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+            min-width: 0; /* Prevents flexbox overflow */
+        }
+
+        .leaderboard-area {
+            flex: 1 1 300px;
+            min-width: 280px;
+        }
+
+        /* --- Leaderboard Styles (from leaderboard.html) --- */
+        .leaderboard-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: baseline;
+            margin-bottom: 1.6rem;
+        }
+        
+        .leaderboard-header h4 {
+            font-size: 2.2rem;
+            margin: 0;
+            color: #2c3e50;
+        }
+
+        /* Static dropdown for visual purposes */
+        .lap-selector-static {
+            font-size: 1.3rem;
+            color: var(--base-60);
+        }
+        .lap-selector-static .lap-number-underlined {
+            text-decoration: underline;
+        }
+
+
+        .standings-grid {
+            width: 100%;
+            border-spacing: 0;
+        }
+        .standings-grid-data-row:nth-of-type(even) .standings-grid-data-cell {
+            background: var(--base-5);
+        }
+        .standings-grid-header-cell {
+            text-align: left;
+            padding: 0.8rem;
+            font-size: 1.3rem;
+            border-bottom: 1px solid var(--base-40);
+            color: var(--base-60);
+        }
+        .standings-grid-data-cell {
+            padding: 1.2rem 0.8rem;
+            vertical-align: middle;
+            font-size: 1.5rem;
+        }
+        .driver-details small {
+            opacity: 0.6;
+            font-size: 1.2rem;
+        }
+
+        .ranking-bubble {
+            display: inline-flex; border-radius: 50%; width: 3.2rem; height: 3.2rem;
+            background: var(--base-20); color: var(--invert-full); 
+            align-items: center; justify-content: center;
+            font-size: 1.4rem; position: relative; border: 2px solid var(--base-20); 
+        }
+        .ranking-bubble:before { 
+            content: ""; position: absolute; top: 0; bottom: 0; left: 0; right: 0;
+            opacity: 0.15; border-radius: 50%;
+        }
+        .ranking-bubble-first { border-color: var(--first); color: var(--first); background: transparent; }
+        .ranking-bubble-first:before { background: var(--first); }
+        .ranking-bubble-second { border-color: var(--second); color: var(--second); background: transparent; }
+        .ranking-bubble-second:before { background: var(--second); }
+
+        .align-text-center { text-align: center !important; }
+        .align-text-right { text-align: right !important; }
+        
+        /* --- Playback & Controls Styles --- */
+        #canvas-container {
+            width: 100%;
+            height: 50vh;
+            min-height: 400px;
+            max-height: 600px;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1); /* Enhanced Shadow */
+            background: #000;
+        }
+
+        #controls, #timeline {
+            background-color: #fdfdfd;
+            border: 1px solid #e0e0e0;
+            padding: 1.5rem;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1); /* Enhanced Shadow */
+        }
+
+        #controls {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 1rem;
+        }
+
+        .control-btn {
+            background: #2c3e50;
+            color: #fff;
+            padding: 1rem 1.8rem;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 1.4rem;
+            font-weight: 500;
+            text-decoration: none;
+            text-align: center;
+            transition: background-color 0.3s ease, transform 0.2s ease;
+        }
+        .control-btn:hover {
+            background: #34495e;
+            transform: translateY(-1px);
+        }
+
+        #timeline {
+            display: flex;
+            align-items: center;
+            gap: 1.5rem;
+            flex-wrap: wrap;
+        }
+
+        #timeline-controls {
+            display: flex;
+            gap: 0.8rem;
+        }
+        
+        #timeline-controls button {
+             background: #e74c3c;
+             color: #fff;
+             border: none;
+             border-radius: 50%;
+             width: 36px;
+             height: 36px;
+             font-size: 1.6rem;
+             cursor: pointer;
+             display: flex;
+             align-items: center;
+             justify-content: center;
+             transition: background-color 0.3s ease;
+        }
+        #timeline-controls button:hover {
+            background: #c0392b;
+        }
+        
+        #timeline-slider-container {
+            flex-grow: 1;
+            position: relative;
+            display: flex;
+            align-items: center;
+        }
+
+        #timeline-slider {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 100%;
+            height: 8px;
+            background: #ddd;
+            outline: none;
+            border-radius: 4px;
+            transition: opacity .2s;
+        }
+
+        #timeline-slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 20px;
+            height: 20px;
+            background: #e74c3c;
+            cursor: pointer;
+            border-radius: 50%;
+            border: 2px solid white;
+            box-shadow: 0 0 5px rgba(0,0,0,0.3);
+        }
+        
+        #timeline-time {
+            position: absolute;
+            top: -30px;
+            background: #2c3e50;
+            color: white;
+            padding: 0.3rem 0.8rem;
+            border-radius: 4px;
+            font-size: 1.2rem;
+            transform: translateX(-50%);
+            white-space: nowrap;
+        }
+        
+        #timeline-progress {
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            height: 8px;
+            background-color: #e74c3c;
+            border-radius: 4px;
+            pointer-events: none;
+        }
+
+    </style>
+    <script type="importmap">
+        {
+            "imports": {
+                "three": "https://cdn.jsdelivr.net/npm/three@0.160.1/build/three.module.js"
+            }
+        }
+    </script>
+</head>
+<body>
+    <header class="page-header">
+        <h1>RaceTrace</h1>
+    </header>
+
+    <div class="main-container">
+        <main>
+            <aside class="leaderboard-area">
+                <div class="leaderboard-header">
+                    <h4>Race Playback</h4>
+                    <div class="lap-selector-static">
+                        <span>Lap </span><span class="lap-number-underlined">1</span><span>/1</span>
+                    </div>
+                </div>
+                <table class="standings-grid">
+                    <thead class="standings-grid-header">
+                        <tr class="standings-grid-header-row">
+                            <th class="standings-grid-header-cell align-text-center">Pos</th>
+                            <th class="standings-grid-header-cell">Driver</th>
+                            <th class="standings-grid-header-cell align-text-right">Time / Interval</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr class="standings-grid-data-row">
+                            <td class="standings-grid-data-cell align-text-center"><span class="ranking-bubble ranking-bubble-first">1</span></td>
+                            <td class="standings-grid-data-cell driver-details">
+                                <strong id="leaderName">Red</strong><br>
+                                <small>Red Bull</small>
+                            </td>
+                            <td class="standings-grid-data-cell align-text-right"><strong id="leaderTime">0.00s</strong></td>
+                        </tr>
+                        <tr class="standings-grid-data-row">
+                            <td class="standings-grid-data-cell align-text-center"><span class="ranking-bubble ranking-bubble-second">2</span></td>
+                            <td class="standings-grid-data-cell driver-details">
+                                <strong id="secondName">Orange</strong><br>
+                                <small>McLaren</small>
+                            </td>
+                            <td class="standings-grid-data-cell align-text-right"><strong id="secondTime">0.00s</strong></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </aside>
+
+            <section class="playback-area">
+                <div id="canvas-container"></div>
+                
+                <div id="controls">
+                    <button id="birdsEyeBtn" class="control-btn">Bird's Eye View</button>
+                    <button id="kart1Btn" class="control-btn">Kart 1 (Red)</button>
+                    <button id="kart2Btn" class="control-btn">Kart 2 (Orange)</button>
+                    <button id="frontViewBtn" class="control-btn">Front View</button>
+                </div>
+
+                <div id="timeline">
+                    <div id="timeline-controls">
+                        <button id="rewindBtn">&lt;&lt;</button>
+                        <button id="playPauseBtn">▶</button>
+                        <button id="joinBtn">↔</button>
+                        <button id="unjoinBtn">↻</button>
+                        <button id="fastForwardBtn">&gt;&gt;</button>
+                    </div>
+                    <div id="timeline-slider-container">
+                        <div id="timeline-progress"></div>
+                        <input type="range" id="timeline-slider" min="0" value="0" class="timeline-slider">
+                        <span id="timeline-time">0.00s</span>
+                    </div>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <footer class="page-footer">
+        <p>&copy; 2025 RaceTrace. Relive every lap.</p>
+    </footer>
+
+    <script type="module">
+        import * as THREE from 'three';
+        import { GLTFLoader } from 'https://cdn.jsdelivr.net/npm/three@0.160.1/examples/jsm/loaders/GLTFLoader.js';
+        import { kartCoordinates, kartLineCoordinates } from './car_cords/carA5_coordinates.js';
+        import { kartTwoCoordinates, kartTwoLineCoordinates } from './car_cords/carB777_coordinates.js';
+        import { outerCoordinates } from './car_cords/outer.js';
+        import { innerCoordinates } from './car_cords/inner.js';
+
+        try {
+            const canvasContainer = document.getElementById('canvas-container');
+            let canvasWidth = canvasContainer.clientWidth;
+            let canvasHeight = canvasContainer.clientHeight;
+
+            const scene = new THREE.Scene();
+            const camera = new THREE.PerspectiveCamera(75, canvasWidth / canvasHeight, 0.1, 5000);
+            const renderer = new THREE.WebGLRenderer({ antialias: true });
+            renderer.setSize(canvasWidth, canvasHeight);
+            renderer.shadowMap.enabled = true;
+            renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+            canvasContainer.appendChild(renderer.domElement);
+
+            // Assuming Z is UP for the world, consistent with kart.position.z for height
+            camera.up.set(0,0,1); // CHANGED: World Z is up
+
+            window.addEventListener('resize', onWindowResize, false);
+            function onWindowResize() {
+                if (canvasContainer.clientWidth !== canvasWidth || canvasContainer.clientHeight !== canvasHeight) {
+                    canvasWidth = canvasContainer.clientWidth;
+                    canvasHeight = canvasContainer.clientHeight;
+                    camera.aspect = canvasWidth / canvasHeight;
+                    camera.updateProjectionMatrix();
+                    renderer.setSize(canvasWidth, canvasHeight);
+                    updateTimelineDisplay();
+                }
+            }
+
+            const timingGates = [];
+            const numPossibleGates = Math.min(outerCoordinates.length, innerCoordinates.length);
+            for (let i = 0; i < numPossibleGates; i++) {
+                timingGates.push({
+                    p1: { x: outerCoordinates[i].x, y: outerCoordinates[i].y },
+                    p2: { x: innerCoordinates[i].x, y: innerCoordinates[i].y },
+                    name: `Gate ${i}`
+                });
+            }
+            if (timingGates.length > 0) timingGates[0].name = "Start/Finish";
+
+            function createGateVisuals(gates) {
+                const gateMaterial = new THREE.LineBasicMaterial({ 
+                    color: 0x00dd00, 
+                    linewidth: 0, 
+                    transparent: true, 
+                    opacity: 0 
+                    });
+                const gateGroup = new THREE.Group();
+                gates.forEach(gate => {
+                    // Calculate direction vector
+                    const dx = gate.p2.x - gate.p1.x;
+                    const dy = gate.p2.y - gate.p1.y;
+                    // Length of the gate
+                    const len = Math.sqrt(dx * dx + dy * dy);
+                    if (len === 0) return;
+                    // Perpendicular vector (normalized)
+                    const perpX = -dy / len;
+                    const perpY = dx / len;
+                    // Make the gate 3x as long, centered on the original segment
+                    // Center of the gate
+                    const cx = (gate.p1.x + gate.p2.x) / 2;
+                    const cy = (gate.p1.y + gate.p2.y) / 2;
+                    // Half-length for 3x gate
+                    const halfLen = (len * 3) / 2;
+                    // Direction vector (normalized)
+                    const dirX = dx / len;
+                    const dirY = dy / len;
+                    // New endpoints
+                    const newP1 = {
+                        x: cx - dirX * halfLen,
+                        y: cy - dirY * halfLen
+                    };
+                    const newP2 = {
+                        x: cx + dirX * halfLen,
+                        y: cy + dirY * halfLen
+                    };
+                    const points = [
+                        new THREE.Vector3(newP1.x, newP1.y, 0.55),
+                        new THREE.Vector3(newP2.x, newP2.y, 0.55)
+                    ];
+                    const geometry = new THREE.BufferGeometry().setFromPoints(points);
+                    gateGroup.add(new THREE.Line(geometry, gateMaterial));
+                });
+                scene.add(gateGroup);
+            }
+            if (timingGates.length > 0) createGateVisuals(timingGates);
+
+            function createTrack(outerCoords, innerCoords) {
+                const texLoader = new THREE.TextureLoader();
+                const asphalt = texLoader.load('textures/asphalt.jpg', () => renderer.render(scene, camera));
+                asphalt.wrapS = asphalt.wrapT = THREE.RepeatWrapping;
+                asphalt.repeat.set(0.1, 0.1);
+                const shape = new THREE.Shape(); // Shape is in XY
+                if (outerCoords.length > 0) {
+                    shape.moveTo(outerCoords[0].x, outerCoords[0].y);
+                    for (let i = 1; i < outerCoords.length; i++) {
+                        shape.lineTo(outerCoords[i].x, outerCoords[i].y);
+                    }
+                }
+                if (innerCoords.length > 0) {
+                    const hole = new THREE.Path();
+                    hole.moveTo(innerCoords[0].x, innerCoords[0].y);
+                    for (let i = 1; i < innerCoords.length; i++) {
+                        hole.lineTo(innerCoords[i].x, innerCoords[i].y);
+                    }
+                    shape.holes.push(hole);
+                }
+                // ExtrudeGeometry extrudes along Z if shape is XY
+                const geo = new THREE.ExtrudeGeometry(shape, { depth: 0.5, bevelEnabled: false });
+                const mat = new THREE.MeshStandardMaterial({ map: asphalt, metalness: 0.1, roughness: 0.9 });
+                const mesh = new THREE.Mesh(geo, mat); // Mesh is now on XY plane, with depth along Z
+                mesh.receiveShadow = true;
+                // mesh.rotation.x = -Math.PI / 2; // If you wanted to lay it on XZ, but it's already good for Z-up
+                return mesh;
+            }
+            scene.add(createTrack(outerCoordinates, innerCoordinates));
+
+            const floorGeo = new THREE.PlaneGeometry(3800, 2600); // Creates in XY plane
+            const floorTexLoader = new THREE.TextureLoader();
+            const grass = floorTexLoader.load('textures/grass.jpg', () => renderer.render(scene, camera));
+            grass.wrapS = grass.wrapT = THREE.RepeatWrapping;
+            grass.repeat.set(100, 100);
+            const floorMat = new THREE.MeshStandardMaterial({ map: grass, metalness: 0.1, roughness: 0.9 });
+            const floor = new THREE.Mesh(floorGeo, floorMat);
+            // floor.rotation.x = -Math.PI / 2; // Rotates to be on XZ plane if Y was up
+            // No rotation needed if it's an XY plane and Z is height. Position it below track.
+            floor.position.z = -0.01; // CHANGED: Position along Z
+            floor.receiveShadow = true;
+            scene.add(floor);
+
+            const KART_LINE_COLORS = { red: 0xDD7777, orange: 0xFFB366 };
+            function createFlatRacingLine(path, color, width) {
+                const pts = path.map(c => new THREE.Vector3(c.x, c.y, 0.58)); // Z for height
+                if (pts.length < 2) return new THREE.Group();
+                const verts = [], inds = [];
+                for (let i = 0; i < pts.length; i++) {
+                    const curr = pts[i];
+                    const next = pts[(i + 1) % pts.length];
+                    const dir = new THREE.Vector3().subVectors(next, curr).normalize(); // dir in XY plane
+                    const norm = new THREE.Vector3(-dir.y, dir.x, 0).multiplyScalar(width / 2); // norm in XY plane
+                    verts.push(
+                        curr.x + norm.x, curr.y + norm.y, curr.z,
+                        curr.x - norm.x, curr.y - norm.y, curr.z
+                    );
+                }
+                for (let i = 0; i < pts.length; i++) {
+                    const c1 = i * 2; const c2 = i * 2 + 1;
+                    const n1 = ((i + 1) % pts.length) * 2; const n2 = ((i + 1) % pts.length) * 2 + 1;
+                    inds.push(c1, c2, n1, c2, n2, n1);
+                }
+                const geo = new THREE.BufferGeometry();
+                geo.setAttribute('position', new THREE.Float32BufferAttribute(verts, 3));
+                geo.setIndex(inds);
+                return new THREE.Mesh(geo, new THREE.MeshBasicMaterial({ color: color, side: THREE.DoubleSide }));
+            }
+            if (kartLineCoordinates.length > 0) scene.add(createFlatRacingLine(kartLineCoordinates, KART_LINE_COLORS.red, 0.8));
+            if (kartTwoLineCoordinates.length > 0) scene.add(createFlatRacingLine(kartTwoLineCoordinates, KART_LINE_COLORS.orange, 0.8));
+
+            // User's original rotation logic for karts. This assumes kart models have a specific default orientation.
+            // rotationOffset seems to be an adjustment to align atan2(dy,dx) (angle in XY plane) with the kart's perceived 'yaw' axis.
+            const rotationOffset = -1.5708; // User's value: -Math.PI / 2
+
+            function calculateInitialAngle(coords, defaultAngle = 0) { // Angle in XY plane
+                if (coords && coords.length > 1) {
+                    const dx = coords[1].x - coords[0].x;
+                    const dy = coords[1].y - coords[0].y;
+                    if (Math.sqrt(dx * dx + dy * dy) > 0.01) {
+                        return Math.atan2(dy, dx);
+                    }
+                }
+                return defaultAngle;
+            }
+
+            let redBlock, orangeBlock;
+            let adjustedRedCoords = [...kartCoordinates];
+            let adjustedOrangeCoords = [...kartTwoCoordinates];
+            let redTargetAngle = calculateInitialAngle(adjustedRedCoords);
+            let orangeTargetAngle = calculateInitialAngle(adjustedOrangeCoords);
+
+            let redKartLogicalPosition = { x: 0, y: 0, prevX: 0, prevY: 0, time: 0 };
+            let orangeKartLogicalPosition = { x: 0, y: 0, prevX: 0, prevY: 0, time: 0 };
+
+            function initializeKartLogicalPositions() {
+                if (adjustedRedCoords.length > 0) {
+                    redKartLogicalPosition.x = adjustedRedCoords[0].x;
+                    redKartLogicalPosition.y = adjustedRedCoords[0].y;
+                    redKartLogicalPosition.prevX = redKartLogicalPosition.x;
+                    redKartLogicalPosition.prevY = redKartLogicalPosition.y;
+                    redKartLogicalPosition.time = adjustedRedCoords[0].time || 0;
+                }
+                if (adjustedOrangeCoords.length > 0) {
+                    orangeKartLogicalPosition.x = adjustedOrangeCoords[0].x;
+                    orangeKartLogicalPosition.y = adjustedOrangeCoords[0].y;
+                    orangeKartLogicalPosition.prevX = orangeKartLogicalPosition.x;
+                    orangeKartLogicalPosition.prevY = orangeKartLogicalPosition.y;
+                    orangeKartLogicalPosition.time = adjustedOrangeCoords[0].time || 0;
+                }
+            }
+            initializeKartLogicalPositions();
+
+            function createKart(modelPath, callback, colorName) {
+                const loader = new GLTFLoader();
+                loader.load(
+                    modelPath,
+                    gltf => {
+                        const k = gltf.scene;
+                        k.scale.set(0.4, 0.4, 0.4);
+                        // User's original rotation:
+                        k.rotation.set(1.5708, -1.5708, 0);
+                        // If Z is up, and kart model's forward is +Z and its up is +Y:
+                        // k.rotation.x = Math.PI / 2; // Lay it flat, forward now along world +Y
+                        // Then to make it point along world +X for angle=0 in XY plane:
+                        // k.rotation.z = -Math.PI / 2; // (Or adjust 'rotationOffset' or base angle)
+                        // For now, sticking to user's complex initial rotation.
+                        k.traverse(n => { if (n.isMesh) n.castShadow = true; });
+                        scene.add(k);
+                        callback(k);
+                    },
+                    undefined,
+                    e => {
+                        console.error(`Error loading ${modelPath}:`, e);
+                        const g = new THREE.BoxGeometry(3.35, 1.35, 1.85); // W, H, D - adjust if Z is up
+                        const m = new THREE.MeshStandardMaterial({ color: (colorName === 'red' ? KART_LINE_COLORS.red : KART_LINE_COLORS.orange) });
+                        const b = new THREE.Mesh(g, m);
+                        b.rotation.set(1.5708, -1.5708, 0); // Match GLTF initial rotation
+                        b.castShadow = true;
+                        scene.add(b);
+                        callback(b);
+                    }
+                );
+            }
+
+            createKart('kart.glb', (k) => {
+                redBlock = k;
+                if (adjustedRedCoords.length > 0 && redBlock) {
+                    redBlock.position.set(redKartLogicalPosition.x, redKartLogicalPosition.y, 0.67); // Z for height
+                }
+                redTargetAngle = calculateInitialAngle(adjustedRedCoords);
+                if (redBlock) redBlock.rotation.y = redTargetAngle + rotationOffset; // User's original yaw control
+            }, 'red');
+
+            createKart('kart2.glb', (k) => {
+                orangeBlock = k;
+                if (adjustedOrangeCoords.length > 0 && orangeBlock) {
+                    orangeBlock.position.set(orangeKartLogicalPosition.x, orangeKartLogicalPosition.y, 0.67); // Z for height
+                }
+                orangeTargetAngle = calculateInitialAngle(adjustedOrangeCoords);
+                if (orangeBlock) orangeBlock.rotation.y = orangeTargetAngle + rotationOffset; // User's original yaw control
+            }, 'orange');
+
+            const ambLight = new THREE.AmbientLight(0xffffff, 0.7);
+            scene.add(ambLight);
+            const dirLight = new THREE.DirectionalLight(0xffe0b2, 1.0);
+            dirLight.position.set(100, 50, 100); // x, y, z (height)
+            dirLight.castShadow = true;
+            dirLight.shadow.mapSize.set(2048, 2048); /* ...shadow cam properties ... */
+            scene.add(dirLight);
+
+            camera.position.set(0, -200, 300); // x,y,z looking from Y towards origin, Z up
+            camera.lookAt(0, 0, 0);
+            // camera.up is already (0,0,1)
+
+            let elapsedTime = 0;
+            const lapDurRed = kartCoordinates.length > 0 ? kartCoordinates[kartCoordinates.length - 1].time : 30;
+            const lapDurOrange = kartTwoCoordinates.length > 0 ? kartTwoCoordinates[kartTwoCoordinates.length - 1].time : 30;
+            const resetDelay = 2.0;
+            let adjustedMaxLapDuration = Math.max(lapDurRed, lapDurOrange) + resetDelay;
+
+            let currentView = 'birdsEye';
+            let lastRedGate = -1;
+            let lastOrangeGate = -1;
+
+            let isScrubbing = false;
+            let isPaused = true;
+            let isResetting = false;
+            let resetStartTime = 0;
+            let lastTimestamp = performance.now();
+
+            let camTargetPos = new THREE.Vector3();
+            let camTargetLook = new THREE.Vector3();
+            let camTransActive = false;
+            const camTransDur = 0.5; // seconds
+            let camTransStart = 0;
+            let camInitPos = new THREE.Vector3();
+            let camInitLook = new THREE.Vector3();
+            let camInitUp = new THREE.Vector3(0,0,1); // Default world Z up
+            let camInitUpTarget = new THREE.Vector3(0,0,1); // Default target up
+
+            const leaderNameDOM = document.getElementById('leaderName'); /* ... other DOM elements ... */
+            const leaderTimeDOM = document.getElementById('leaderTime');
+            const secondNameDOM = document.getElementById('secondName');
+            const secondTimeDOM = document.getElementById('secondTime');
+            const timelineSliderEl = document.getElementById('timeline-slider');
+            const timelineProgressEl = document.getElementById('timeline-progress');
+            const timelineTimeEl = document.getElementById('timeline-time');
+            const playPauseBtn = document.getElementById('playPauseBtn');
+            const rewindBtn = document.getElementById('rewindBtn');
+            const fastForwardBtn = document.getElementById('fastForwardBtn');
+            const joinBtn = document.getElementById('joinBtn');
+            const unjoinBtn = document.getElementById('unjoinBtn');
+
+
+            timelineSliderEl.max = adjustedMaxLapDuration * 1000;
+            timelineSliderEl.value = 0;
+            playPauseBtn.innerHTML = '▶';
+
+            function interpolateCrossTime(p1, p2, t1, t2, gate) {
+                // Parametric intersection for accurate crossing time
+                const x1 = p1.x, y1 = p1.y, x2 = p2.x, y2 = p2.y;
+                const x3 = gate.p1.x, y3 = gate.p1.y, x4 = gate.p2.x, y4 = gate.p2.y;
+                const denom = (x1-x2)*(y3-y4)-(y1-y2)*(x3-x4);
+                if (Math.abs(denom) < 1e-8) return t1; // Parallel, fallback
+                const t = ((x1-x3)*(y3-y4)-(y1-y3)*(x3-x4))/denom;
+                return t1 + t*(t2-t1);
+            }
+
+            function computeGateCrossings(path, gates, kartName = "") {
+                const crossingTimes = new Array(gates.length).fill(null);
+                if (!path || path.length < 2 || !gates || gates.length === 0) return crossingTimes;
+                if (gates.length > 0 && path.length > 0 && path[0].time === 0) {
+                    const p0 = path[0];
+                    const g0 = gates[0];
+                    if ((Math.abs(p0.x - g0.p1.x) < 1 && Math.abs(p0.y - g0.p1.y) < 1)) {
+                        crossingTimes[0] = 0;
+                    }
+                } else if (gates.length > 0) {
+                    crossingTimes[0] = 0;
+                }
+                let currentGateIndexToFind = 1;
+                for (let i = 0; i < path.length - 1 && currentGateIndexToFind < gates.length; i++) {
+                    const p1 = path[i];
+                    const p2 = path[i + 1];
+                    const t1 = p1.time, t2 = p2.time;
+                    // Use the extended gate endpoints for intersection
+                    const gate = gates[currentGateIndexToFind];
+                    // Calculate extended gate endpoints (same as in createGateVisuals)
+                    const dx = gate.p2.x - gate.p1.x;
+                    const dy = gate.p2.y - gate.p1.y;
+                    const len = Math.sqrt(dx * dx + dy * dy);
+                    if (len === 0) continue;
+                    const cx = (gate.p1.x + gate.p2.x) / 2;
+                    const cy = (gate.p1.y + gate.p2.y) / 2;
+                    const halfLen = (len * 3) / 2;
+                    const dirX = dx / len;
+                    const dirY = dy / len;
+                    const extP1 = {
+                        x: cx - dirX * halfLen,
+                        y: cy - dirY * halfLen
+                    };
+                    const extP2 = {
+                        x: cx + dirX * halfLen,
+                        y: cy + dirY * halfLen
+                    };
+                    if (segmentsIntersect(p1.x, p1.y, p2.x, p2.y, extP1.x, extP1.y, extP2.x, extP2.y)) {
+                        // Use interpolation for accurate crossing time, but with extended gate
+                        const fakeGate = { p1: extP1, p2: extP2 };
+                        crossingTimes[currentGateIndexToFind] = interpolateCrossTime(p1, p2, t1, t2, fakeGate);
+                        currentGateIndexToFind++;
+                        i--; // allow for multiple gates in one segment
+                    }
+                }
+                return crossingTimes;
+            }
+
+            let redGateCrossingTimes = computeGateCrossings(adjustedRedCoords, timingGates);
+            let orangeGateCrossingTimes = computeGateCrossings(adjustedOrangeCoords, timingGates, "orange");
+
+            function setCameraView(view) {
+                // If already in this view and not mid-transition, do nothing
+                if (currentView === view && !camTransActive) return;
+
+                currentView = view;
+                camTransActive = true;
+                camTransStart = performance.now() / 1000;
+
+                camInitPos.copy(camera.position);
+                // Get current lookAt point for smooth transition start
+                const currentLookAt = new THREE.Vector3();
+                camera.getWorldDirection(currentLookAt).multiplyScalar(10).add(camera.position); // A point in front
+                camInitLook.copy(currentLookAt);
+                camInitUp.copy(camera.up); // Current camera up
+
+                updateCameraTarget(); // Calculate initial camTargetPos, camTargetLook, camInitUpTarget for the new view
+            }
+
+            function updateCameraTarget() {
+                // Default up vector for camera aiming, assuming Z is world up
+                let newTargetUp = new THREE.Vector3(0,0,1);
+
+                if (currentView === 'birdsEye') {
+                    camTargetPos.set(500, 300, 1200); // x, y (further back), z (height)
+                    camTargetLook.set(500,300,0); // Look at origin or track center
+                    newTargetUp.set(0,1,0); // For bird's eye looking down, Y can be screen up
+                } else if (currentView === 'kart1' && redBlock) {
+                    const kart = redBlock;
+                    const angle = kart.rotation.y - rotationOffset; // User's yaw control
+                    const dirX = Math.cos(angle); const dirY = Math.sin(angle); // Direction in XY plane
+
+                    camTargetPos.set(kart.position.x - dirX * 12, kart.position.y - dirY * 12, kart.position.z + 4);
+                    camTargetLook.set(kart.position.x, kart.position.y, kart.position.z + 0.5); // Look slightly above kart center
+                } else if (currentView === 'kart2' && orangeBlock) {
+                    const kart = orangeBlock;
+                    const angle = kart.rotation.y - rotationOffset;
+                    const dirX = Math.cos(angle); const dirY = Math.sin(angle);
+
+                    camTargetPos.set(kart.position.x - dirX * 12, kart.position.y - dirY * 12, kart.position.z + 4);
+                    camTargetLook.set(kart.position.x, kart.position.y, kart.position.z + 0.5);
+                } else if (currentView === 'frontView') {
+                    let leaderKart = null;
+                    // Leader determination logic (same as in animate)
+                    if (redBlock && orangeBlock) {
+                        if (lastOrangeGate > lastRedGate || (lastOrangeGate === lastRedGate && lastOrangeGate !== -1 && orangeGateCrossingTimes[lastOrangeGate] != null && redGateCrossingTimes[lastRedGate] != null && orangeGateCrossingTimes[lastOrangeGate] < redGateCrossingTimes[lastRedGate])) {
+                            leaderKart = orangeBlock;
+                        } else { leaderKart = redBlock; }
+                    } else if (redBlock) { leaderKart = redBlock; }
+                    else if (orangeBlock) { leaderKart = orangeBlock; }
+
+                    if (leaderKart) {
+                        const kart = leaderKart;
+                        const angle = kart.rotation.y - rotationOffset;
+                        const dirX = Math.cos(angle); const dirY = Math.sin(angle);
+                        // Position camera in front, looking back slightly or at kart
+                        camTargetPos.set(kart.position.x + dirX * 10, kart.position.y + dirY * 10, kart.position.z + 3);
+                        camTargetLook.set(kart.position.x, kart.position.y, kart.position.z + 0.5);
+                    } else { // Fallback to bird's eye if no leader
+                        camTargetPos.set(0, -150, 250); camTargetLook.set(0,0,0); newTargetUp.set(0,1,0);
+                    }
+                }
+                camInitUpTarget.copy(newTargetUp); // This is the 'up' the camera should have for this view
+            }
+
+            document.getElementById('birdsEyeBtn').addEventListener('click', () => setCameraView('birdsEye'));
+            /* ... other button listeners ... */
+            document.getElementById('kart1Btn').addEventListener('click', () => setCameraView('kart1'));
+            document.getElementById('kart2Btn').addEventListener('click', () => setCameraView('kart2'));
+            document.getElementById('frontViewBtn').addEventListener('click', () => setCameraView('frontView'));
+
+
+            timelineSliderEl.addEventListener('input', (e) => { /* ... same ... */
+                isScrubbing = true;
+                elapsedTime = parseFloat(e.target.value) / 1000;
+                updateResetStateAndGatesForElapsedTime();
+                updateKartVisualsAndLogicalState(elapsedTime);
+                updateTimelineDisplay();
+            });
+            timelineSliderEl.addEventListener('change', () => { /* ... same ... */
+                isScrubbing = false;
+                updateResetStateAndGatesForElapsedTime(); 
+                updateKartVisualsAndLogicalState(elapsedTime);
+                if (!isPaused) {
+                    lastTimestamp = performance.now();
+                }
+            });
+
+            function updateResetStateAndGatesForElapsedTime() { /* ... same as previous good version ... */
+                const currentMaxPathTimeRed = adjustedRedCoords.length > 0 ? adjustedRedCoords[adjustedRedCoords.length - 1].time : 0;
+                const currentMaxPathTimeOrange = adjustedOrangeCoords.length > 0 ? adjustedOrangeCoords[adjustedOrangeCoords.length - 1].time : 0;
+                const currentOverallMaxPathTime = Math.max(currentMaxPathTimeRed, currentMaxPathTimeOrange);
+
+                if (elapsedTime >= currentOverallMaxPathTime && elapsedTime < currentOverallMaxPathTime + resetDelay && currentOverallMaxPathTime > 0) {
+                    isResetting = true;
+                    const timeIntoResetVisual = elapsedTime - currentOverallMaxPathTime;
+                    resetStartTime = (isPaused || isScrubbing ? elapsedTime : performance.now() / 1000) - timeIntoResetVisual;
+                } else if (elapsedTime >= currentOverallMaxPathTime + resetDelay && currentOverallMaxPathTime > 0) {
+                    isResetting = false; elapsedTime = 0; timelineSliderEl.value = 0;
+                    if (!isPaused && !isScrubbing) lastTimestamp = performance.now();
+                    adjustedRedCoords = [...kartCoordinates]; adjustedOrangeCoords = [...kartTwoCoordinates];
+                    redGateCrossingTimes = computeGateCrossings(adjustedRedCoords, timingGates);
+                    orangeGateCrossingTimes = computeGateCrossings(adjustedOrangeCoords, timingGates, "orange");
+                    adjustedMaxLapDuration = Math.max(lapDurRed, lapDurOrange) + resetDelay;
+                    timelineSliderEl.max = adjustedMaxLapDuration * 1000;
+                    lastRedGate = -1; lastOrangeGate = -1; initializeKartLogicalPositions();
+                    if (redBlock && adjustedRedCoords.length > 0) { /* ... reset kart pos/rot ... */
+                        redBlock.position.set(adjustedRedCoords[0].x, adjustedRedCoords[0].y, 0.67);
+                        redTargetAngle = calculateInitialAngle(adjustedRedCoords);
+                        redBlock.rotation.y = redTargetAngle + rotationOffset;
+                    }
+                    if (orangeBlock && adjustedOrangeCoords.length > 0) { /* ... reset kart pos/rot ... */
+                        orangeBlock.position.set(adjustedOrangeCoords[0].x, adjustedOrangeCoords[0].y, 0.67);
+                        orangeTargetAngle = calculateInitialAngle(adjustedOrangeCoords);
+                        orangeBlock.rotation.y = orangeTargetAngle + rotationOffset;
+                    }
+                } else { isResetting = false; }
+            }
+            playPauseBtn.addEventListener('click', () => { /* ... same ... */
+                isPaused = !isPaused; playPauseBtn.innerHTML = isPaused ? '▶' : '⏸';
+                if (!isPaused) { lastTimestamp = performance.now(); updateResetStateAndGatesForElapsedTime(); }
+            });
+            const skipInterval = 1;
+            rewindBtn.addEventListener('click', () => { /* ... same ... */
+                elapsedTime = Math.max(0, elapsedTime - skipInterval); updateResetStateAndGatesForElapsedTime();
+                updateKartVisualsAndLogicalState(elapsedTime); timelineSliderEl.value = elapsedTime * 1000;
+                updateTimelineDisplay(); if (!isPaused && !isScrubbing) lastTimestamp = performance.now();
+            });
+            fastForwardBtn.addEventListener('click', () => { /* ... same ... */
+                elapsedTime = Math.min(adjustedMaxLapDuration, elapsedTime + skipInterval); updateResetStateAndGatesForElapsedTime();
+                updateKartVisualsAndLogicalState(elapsedTime); timelineSliderEl.value = elapsedTime * 1000;
+                updateTimelineDisplay(); if (!isPaused && !isScrubbing) lastTimestamp = performance.now();
+            });
+
+            joinBtn.addEventListener('click', () => { /* ... keeping user's existing join logic ... */
+                if (!redBlock || !orangeBlock || kartCoordinates.length === 0 || kartTwoCoordinates.length === 0) {
+                    console.warn("Cannot join: Kart models or original paths not ready."); return;
+                }
+                let leaderOriginalCoords, followerOriginalCoords, leaderAdjustedCoords, followerAdjustedCoords, leaderKartBlock, followerKartBlock, leaderLapDuration, followerLapDuration;
+                let isRedCurrentlyLeader;
+                // --- Leader determination for join (can reuse from animate) ---
+                if (lastRedGate === -1 && lastOrangeGate === -1) { isRedCurrentlyLeader = true; }
+                else if (lastRedGate === -1) { isRedCurrentlyLeader = false; } else if (lastOrangeGate === -1) { isRedCurrentlyLeader = true; }
+                else {
+                    if (lastOrangeGate > lastRedGate) { isRedCurrentlyLeader = false; }
+                    else if (lastRedGate > lastOrangeGate) { isRedCurrentlyLeader = true; }
+                    else { isRedCurrentlyLeader = (redGateCrossingTimes[lastRedGate] != null && orangeGateCrossingTimes[lastOrangeGate] != null && redGateCrossingTimes[lastRedGate] <= orangeGateCrossingTimes[lastOrangeGate]); }
+                }
+                // --- End leader determination ---
+                if (isRedCurrentlyLeader) { /* ... user's assignment ... */
+                    leaderOriginalCoords = kartCoordinates; followerOriginalCoords = kartTwoCoordinates; leaderAdjustedCoords = adjustedRedCoords; followerAdjustedCoords = adjustedOrangeCoords; leaderKartBlock = redBlock; followerKartBlock = orangeBlock; leaderLapDuration = lapDurRed; followerLapDuration = lapDurOrange;
+                } else { /* ... user's assignment ... */
+                    leaderOriginalCoords = kartTwoCoordinates; followerOriginalCoords = kartCoordinates; leaderAdjustedCoords = adjustedOrangeCoords; followerAdjustedCoords = adjustedRedCoords; leaderKartBlock = orangeBlock; followerKartBlock = redBlock; leaderLapDuration = lapDurOrange; followerLapDuration = lapDurRed;
+                }
+                let leaderCurrentX, leaderCurrentY, leaderCurrentAngle; let leaderPosFound = false;
+                if (leaderAdjustedCoords.length > 0) { /* ... user's leader pos find ... */
+                    for (let i = 0; i < leaderAdjustedCoords.length - 1; i++) {
+                        const currT = leaderAdjustedCoords[i].time; const nextT = leaderAdjustedCoords[i + 1].time;
+                        if (elapsedTime >= currT && elapsedTime <= nextT) {
+                            const frac = (nextT === currT) ? 0 : (elapsedTime - currT) / (nextT - currT);
+                            leaderCurrentX = THREE.MathUtils.lerp(leaderAdjustedCoords[i].x, leaderAdjustedCoords[i + 1].x, frac);
+                            leaderCurrentY = THREE.MathUtils.lerp(leaderAdjustedCoords[i].y, leaderAdjustedCoords[i + 1].y, frac);
+                            const dx = leaderAdjustedCoords[i+1].x - leaderAdjustedCoords[i].x; const dy = leaderAdjustedCoords[i+1].y - leaderAdjustedCoords[i].y;
+                            if (Math.sqrt(dx*dx + dy*dy) > 0.01) leaderCurrentAngle = Math.atan2(dy, dx); else leaderCurrentAngle = (isRedCurrentlyLeader ? redTargetAngle : orangeTargetAngle);
+                            leaderPosFound = true; break;
+                        }
+                    }
+                    if (!leaderPosFound) { if (elapsedTime >= leaderAdjustedCoords[leaderAdjustedCoords.length-1].time && leaderAdjustedCoords.length>0) { /* ... end of path ... */ leaderCurrentX = leaderAdjustedCoords[leaderAdjustedCoords.length - 1].x; leaderCurrentY = leaderAdjustedCoords[leaderAdjustedCoords.length - 1].y; if (leaderAdjustedCoords.length > 1) { const dx = leaderAdjustedCoords[leaderAdjustedCoords.length-1].x - leaderAdjustedCoords[leaderAdjustedCoords.length-2].x; const dy = leaderAdjustedCoords[leaderAdjustedCoords.length-1].y - leaderAdjustedCoords[leaderAdjustedCoords.length-2].y; if (Math.sqrt(dx*dx + dy*dy) > 0.01) leaderCurrentAngle = Math.atan2(dy, dx); else leaderCurrentAngle = (isRedCurrentlyLeader ? redTargetAngle : orangeTargetAngle); } else { leaderCurrentAngle = (isRedCurrentlyLeader ? redTargetAngle : orangeTargetAngle); }} else if (leaderAdjustedCoords.length>0) { /* ... start of path ... */ leaderCurrentX = leaderAdjustedCoords[0].x; leaderCurrentY = leaderAdjustedCoords[0].y; if (leaderAdjustedCoords.length > 1) { const dx = leaderAdjustedCoords[1].x - leaderAdjustedCoords[0].x; const dy = leaderAdjustedCoords[1].y - leaderAdjustedCoords[0].y; if (Math.sqrt(dx*dx + dy*dy) > 0.01) leaderCurrentAngle = Math.atan2(dy, dx); else leaderCurrentAngle = (isRedCurrentlyLeader ? redTargetAngle : orangeTargetAngle); } else { leaderCurrentAngle = (isRedCurrentlyLeader ? redTargetAngle : orangeTargetAngle); }} else return; }
+                } else return;
+                let minDistanceSq = Infinity; let closestPointIndexOnFollowerOriginalPath = 0; let followerNewStartX, followerNewStartY;
+                for (let i = 0; i < followerOriginalCoords.length; i++) { /* ... find closest point ... */ const pt = followerOriginalCoords[i]; const dx = pt.x - leaderCurrentX; const dy = pt.y - leaderCurrentY; const distanceSq = dx * dx + dy * dy; if (distanceSq < minDistanceSq) { minDistanceSq = distanceSq; closestPointIndexOnFollowerOriginalPath = i; followerNewStartX = pt.x; followerNewStartY = pt.y; }}
+                if (followerNewStartX === undefined) return;
+                const newFollowerPath = []; newFollowerPath.push({ x: followerNewStartX, y: followerNewStartY, time: elapsedTime }); let lastTimeInNewPath = elapsedTime;
+                for (let i = 1; i < followerOriginalCoords.length; i++) { /* ... build new path ... */ const currentOriginalIdx = (closestPointIndexOnFollowerOriginalPath + i) % followerOriginalCoords.length; const prevOriginalIdx = (closestPointIndexOnFollowerOriginalPath + i - 1 + followerOriginalCoords.length) % followerOriginalCoords.length; const originalPoint = followerOriginalCoords[currentOriginalIdx]; const prevOriginalPoint = followerOriginalCoords[prevOriginalIdx]; let timeInterval = originalPoint.time - prevOriginalPoint.time; if (timeInterval < 0) timeInterval += followerLapDuration; timeInterval = Math.max(0.001, timeInterval); const newTime = lastTimeInNewPath + timeInterval; newFollowerPath.push({ x: originalPoint.x, y: originalPoint.y, time: newTime }); lastTimeInNewPath = newTime; }
+                newFollowerPath.sort((a, b) => a.time - b.time);
+                let newFollowerAngleForVisuals; if (newFollowerPath.length > 1) { const dx = newFollowerPath[1].x - newFollowerPath[0].x; const dy = newFollowerPath[1].y - newFollowerPath[0].y; newFollowerAngleForVisuals = (Math.sqrt(dx*dx+dy*dy) > 0.01) ? Math.atan2(dy, dx) : leaderCurrentAngle; } else { newFollowerAngleForVisuals = leaderCurrentAngle; }
+                followerKartBlock.position.set(followerNewStartX, followerNewStartY, 0.67); followerKartBlock.rotation.y = newFollowerAngleForVisuals + rotationOffset;
+                if (isRedCurrentlyLeader) { /* ... assign new path ... */ adjustedOrangeCoords = newFollowerPath; orangeTargetAngle = newFollowerAngleForVisuals; orangeKartLogicalPosition.x = followerNewStartX; orangeKartLogicalPosition.y = followerNewStartY; orangeKartLogicalPosition.time = elapsedTime; orangeKartLogicalPosition.prevX = followerNewStartX; orangeKartLogicalPosition.prevY = followerNewStartY; orangeGateCrossingTimes = computeGateCrossings(adjustedOrangeCoords, timingGates); } else { /* ... assign new path ... */ adjustedRedCoords = newFollowerPath; redTargetAngle = newFollowerAngleForVisuals; redKartLogicalPosition.x = followerNewStartX; redKartLogicalPosition.y = followerNewStartY; redKartLogicalPosition.time = elapsedTime; redKartLogicalPosition.prevX = followerNewStartX; redKartLogicalPosition.prevY = followerNewStartY; redGateCrossingTimes = computeGateCrossings(adjustedRedCoords, timingGates); }
+                const leaderFinalTime = leaderAdjustedCoords.length > 0 ? leaderAdjustedCoords[leaderAdjustedCoords.length -1].time : 0;
+                const followerFinalTime = newFollowerPath.length > 0 ? newFollowerPath[newFollowerPath.length -1].time : 0;
+                adjustedMaxLapDuration = Math.max(leaderFinalTime, followerFinalTime) + resetDelay; timelineSliderEl.max = adjustedMaxLapDuration * 1000;
+                updateKartVisualsAndLogicalState(elapsedTime); updateTimelineDisplay(); if (!isPaused && !isScrubbing) lastTimestamp = performance.now();
+            });
+            unjoinBtn.addEventListener('click', () => { /* ... same, ensure lastRedGate/lastOrangeGate = -1 ... */
+                adjustedRedCoords = [...kartCoordinates]; adjustedOrangeCoords = [...kartTwoCoordinates];
+                redGateCrossingTimes = computeGateCrossings(adjustedRedCoords, timingGates);
+                orangeGateCrossingTimes = computeGateCrossings(adjustedOrangeCoords, timingGates);
+                elapsedTime = 0; timelineSliderEl.value = 0; lastRedGate = -1; lastOrangeGate = -1;
+                lastTimestamp = performance.now(); isPaused = false; isResetting = false; playPauseBtn.innerHTML = '⏸';
+                initializeKartLogicalPositions();
+                redTargetAngle = calculateInitialAngle(adjustedRedCoords); if (redBlock && adjustedRedCoords.length > 0) { redBlock.position.set(adjustedRedCoords[0].x, adjustedRedCoords[0].y, 0.67); redBlock.rotation.y = redTargetAngle + rotationOffset; }
+                orangeTargetAngle = calculateInitialAngle(adjustedOrangeCoords); if (orangeBlock && adjustedOrangeCoords.length > 0) { orangeBlock.position.set(adjustedOrangeCoords[0].x, adjustedOrangeCoords[0].y, 0.67); orangeBlock.rotation.y = orangeTargetAngle + rotationOffset; }
+                adjustedMaxLapDuration = Math.max(lapDurRed, lapDurOrange) + resetDelay; timelineSliderEl.max = adjustedMaxLapDuration * 1000;
+                updateKartVisualsAndLogicalState(elapsedTime); updateTimelineDisplay();
+            });
+
+            function updateTimelineDisplay() {
+                const sliderContainerElement = timelineSliderEl.parentElement;
+                if (!sliderContainerElement) return;
+
+                const clampedElapsedTime = Math.max(0, Math.min(elapsedTime, adjustedMaxLapDuration));
+                const progressRatio = (adjustedMaxLapDuration > 0) ? (clampedElapsedTime / adjustedMaxLapDuration) : 0;
+                
+                // Update the progress bar width
+                const visualTrackWidth = timelineSliderEl.clientWidth;
+                const progressPixelWidth = progressRatio * visualTrackWidth;
+                timelineProgressEl.style.width = `${progressPixelWidth}px`;
+
+                // Update the time indicator text and position
+                timelineTimeEl.textContent = `${clampedElapsedTime.toFixed(2)}s`;
+                const thumbWidth = 20; // As defined in CSS
+                const thumbCenterApprox = progressPixelWidth * ((visualTrackWidth - thumbWidth) / visualTrackWidth) + (thumbWidth / 2);
+                const timeTextWidth = timelineTimeEl.offsetWidth;
+                let timeTextLeft = thumbCenterApprox - (timeTextWidth / 2);
+                timeTextLeft = Math.max(0, timeTextLeft);
+                timeTextLeft = Math.min(sliderContainerElement.clientWidth - timeTextWidth, timeTextLeft);
+                timelineTimeEl.style.left = `${timeTextLeft}px`;
+            }
+
+            function lerpAngle(currentAngle, targetAngle, alpha) { /* ... same ... */
+                let delta = targetAngle - currentAngle; while (delta > Math.PI) delta -= 2 * Math.PI; while (delta < -Math.PI) delta += 2 * Math.PI; return currentAngle + delta * alpha;
+            }
+            function segmentsIntersect(p1x, p1y, q1x, q1y, p2x, p2y, q2x, q2y) { /* ... same ... */
+                function orientation(px,py,qx,qy,rx,ry){const val=(qy-py)*(rx-qx)-(qx-px)*(ry-qy);if(val===0)return 0;return(val>0)?1:2;} function onSegment(px,py,qx,qy,rx,ry){return qx<=Math.max(px,rx)&&qx>=Math.min(px,rx)&&qy<=Math.max(py,ry)&&qy>=Math.min(py,ry);} const o1=orientation(p1x,p1y,q1x,q1y,p2x,p2y);const o2=orientation(p1x,p1y,q1x,q1y,q2x,q2y);const o3=orientation(p2x,p2y,q2x,q2y,p1x,p1y);const o4=orientation(p2x,p2y,q2x,q2y,q1x,q1y); if(o1!==0&&o2!==0&&o3!==0&&o4!==0){if(o1!==o2&&o3!==o4)return true;}else{if(o1===0&&onSegment(p1x,p1y,p2x,p2y,q1x,q1y))return true;if(o2===0&&onSegment(p1x,p1y,q2x,q2y,q1x,q1y))return true;if(o3===0&&onSegment(p2x,p2y,p1x,p1y,q2x,q2y))return true;if(o4===0&&onSegment(p2x,p2y,q1x,q1y,q2x,q2y))return true;} return false;
+            }
+            function updateKartVisualsAndLogicalState(currentTime) { /* ... same as user's original, ensure Z is used for height if applicable ... */
+                if (redBlock) { /* ... kart update logic ... */
+                    let currentRedX_val, currentRedY_val; const path = adjustedRedCoords;
+                    if (!isResetting && path.length > 0) {
+                        currentRedX_val = path[0].x; currentRedY_val = path[0].y; let foundSegR = false;
+                        for (let i = 0; i < path.length - 1; i++) { const ct = path[i].time, nt = path[i + 1].time; if (currentTime >= ct && currentTime <= nt) { const fr = (nt === ct) ? 0 : (currentTime - ct) / (nt - ct); currentRedX_val = THREE.MathUtils.lerp(path[i].x, path[i + 1].x, fr); currentRedY_val = THREE.MathUtils.lerp(path[i].y, path[i + 1].y, fr); const dx = path[i+1].x - path[i].x; const dy = path[i+1].y - path[i].y; if (Math.sqrt(dx*dx+dy*dy) > 0.01) redTargetAngle = Math.atan2(dy,dx); foundSegR = true; break; }}
+                        if (!foundSegR && path.length > 0) { if (currentTime < path[0].time) {} else { currentRedX_val = path[path.length-1].x; currentRedY_val = path[path.length-1].y; if (path.length > 1) { const dx = path[path.length-1].x - path[path.length-2].x; const dy = path[path.length-1].y - path[path.length-2].y; if (Math.sqrt(dx*dx + dy*dy) > 0.01) redTargetAngle = Math.atan2(dy,dx); }}}
+                        redKartLogicalPosition.prevX = redKartLogicalPosition.x; redKartLogicalPosition.prevY = redKartLogicalPosition.y; redBlock.position.set(currentRedX_val, currentRedY_val, 0.67); redBlock.rotation.y = lerpAngle(redBlock.rotation.y, redTargetAngle + rotationOffset, (isScrubbing || isPaused) ? 1.0 : 0.15); redKartLogicalPosition.x = currentRedX_val; redKartLogicalPosition.y = currentRedY_val; redKartLogicalPosition.time = currentTime;
+                    } else if (isResetting && path.length > 0) { const rP = Math.min(1, (performance.now()/1000 - resetStartTime)/resetDelay); currentRedX_val = THREE.MathUtils.lerp(path[path.length-1].x,path[0].x,rP); currentRedY_val = THREE.MathUtils.lerp(path[path.length-1].y,path[0].y,rP); redBlock.position.set(currentRedX_val,currentRedY_val,0.67); redBlock.rotation.y = lerpAngle(redBlock.rotation.y, calculateInitialAngle(path,redTargetAngle)+rotationOffset, 0.15*rP); redKartLogicalPosition.x = currentRedX_val; redKartLogicalPosition.y = currentRedY_val; }
+                }
+                if (orangeBlock) { /* ... kart update logic ... */
+                    let currentOrangeX_val, currentOrangeY_val; const path = adjustedOrangeCoords;
+                    if (!isResetting && path.length > 0) {
+                        currentOrangeX_val = path[0].x; currentOrangeY_val = path[0].y; let foundSegO = false;
+                        for (let i = 0; i < path.length - 1; i++) { const ct = path[i].time, nt = path[i + 1].time; if (currentTime >= ct && currentTime <= nt) { const fr = (nt === ct) ? 0 : (currentTime - ct) / (nt - ct); currentOrangeX_val = THREE.MathUtils.lerp(path[i].x, path[i + 1].x, fr); currentOrangeY_val = THREE.MathUtils.lerp(path[i].y, path[i + 1].y, fr); const dx = path[i+1].x - path[i].x; const dy = path[i+1].y - path[i].y; if (Math.sqrt(dx*dx+dy*dy) > 0.01) orangeTargetAngle = Math.atan2(dy,dx); foundSegO = true; break; }}
+                        if (!foundSegO && path.length > 0) { if (currentTime < path[0].time) {} else { currentOrangeX_val = path[path.length-1].x; currentOrangeY_val = path[path.length-1].y; if (path.length > 1) { const dx = path[path.length-1].x - path[path.length-2].x; const dy = path[path.length-1].y - path[path.length-2].y; if (Math.sqrt(dx*dx + dy*dy) > 0.01) orangeTargetAngle = Math.atan2(dy,dx); }}}
+                        orangeKartLogicalPosition.prevX = orangeKartLogicalPosition.x; orangeKartLogicalPosition.prevY = orangeKartLogicalPosition.y; orangeBlock.position.set(currentOrangeX_val, currentOrangeY_val, 0.67); orangeBlock.rotation.y = lerpAngle(orangeBlock.rotation.y, orangeTargetAngle + rotationOffset, (isScrubbing || isPaused) ? 1.0 : 0.15); orangeKartLogicalPosition.x = currentOrangeX_val; orangeKartLogicalPosition.y = currentOrangeY_val; orangeKartLogicalPosition.time = currentTime;
+                    } else if (isResetting && path.length > 0) { const rP = Math.min(1, (performance.now()/1000 - resetStartTime)/resetDelay); currentOrangeX_val = THREE.MathUtils.lerp(path[path.length-1].x,path[0].x,rP); currentOrangeY_val = THREE.MathUtils.lerp(path[path.length-1].y,path[0].y,rP); orangeBlock.position.set(currentOrangeX_val,currentOrangeY_val,0.67); orangeBlock.rotation.y = lerpAngle(orangeBlock.rotation.y, calculateInitialAngle(path,orangeTargetAngle)+rotationOffset, 0.15*rP); orangeKartLogicalPosition.x = currentOrangeX_val; orangeKartLogicalPosition.y = currentOrangeY_val; }
+                }
+            }
+
+            function animate(timestamp) {
+                requestAnimationFrame(animate);
+                if (!redBlock || !orangeBlock) return;
+
+                if (!isScrubbing && !isPaused) { /* ... elapsedTime update ... */
+                    const delta = (timestamp - lastTimestamp) / 1000; elapsedTime += delta; lastTimestamp = timestamp;
+                    const maxPathTimeRed = adjustedRedCoords.length > 0 ? adjustedRedCoords[adjustedRedCoords.length - 1].time : 0;
+                    const maxPathTimeOrange = adjustedOrangeCoords.length > 0 ? adjustedOrangeCoords[adjustedOrangeCoords.length - 1].time : 0;
+                    const currentOverallMaxPathTime = Math.max(maxPathTimeRed, maxPathTimeOrange);
+                    if (!isResetting && elapsedTime >= currentOverallMaxPathTime && currentOverallMaxPathTime > 0) { isResetting = true; resetStartTime = timestamp / 1000; elapsedTime = currentOverallMaxPathTime; }
+                    if (isResetting && (timestamp / 1000 - resetStartTime) >= resetDelay) {
+                        elapsedTime = 0; lastTimestamp = timestamp; isResetting = false;
+                        adjustedRedCoords = [...kartCoordinates]; adjustedOrangeCoords = [...kartTwoCoordinates];
+                        redGateCrossingTimes = computeGateCrossings(adjustedRedCoords, timingGates); orangeGateCrossingTimes = computeGateCrossings(adjustedOrangeCoords, timingGates, "orange");
+                        adjustedMaxLapDuration = Math.max(lapDurRed, lapDurOrange) + resetDelay; timelineSliderEl.max = adjustedMaxLapDuration * 1000;
+                        lastRedGate = -1; lastOrangeGate = -1; initializeKartLogicalPositions();
+                        if (redBlock && adjustedRedCoords.length > 0) { redBlock.position.set(adjustedRedCoords[0].x, adjustedRedCoords[0].y, 0.67); redTargetAngle = calculateInitialAngle(adjustedRedCoords); redBlock.rotation.y = redTargetAngle + rotationOffset; }
+                        if (orangeBlock && adjustedOrangeCoords.length > 0) { orangeBlock.position.set(adjustedOrangeCoords[0].x, adjustedOrangeCoords[0].y, 0.67); orangeTargetAngle = calculateInitialAngle(adjustedOrangeCoords); orangeBlock.rotation.y = orangeTargetAngle + rotationOffset; }
+                    }
+                    if (!isResetting) timelineSliderEl.value = elapsedTime * 1000;
+                }
+
+                updateKartVisualsAndLogicalState(elapsedTime);
+                updateTimelineDisplay();
+
+                // Gate update logic
+                if (!isResetting) {
+                    let newLastRedGate = -1;
+                    if (redGateCrossingTimes && redGateCrossingTimes.length > 0 && redGateCrossingTimes[0] != null && elapsedTime >= redGateCrossingTimes[0]) {
+                        newLastRedGate = 0;
+                        for (let i = 1; i < redGateCrossingTimes.length; i++) {
+                            if (redGateCrossingTimes[i] != null && elapsedTime >= redGateCrossingTimes[i]) { newLastRedGate = i; } else { break; }
+                        }
+                    }
+                    lastRedGate = newLastRedGate;
+
+                    let newLastOrangeGate = -1;
+                    if (orangeGateCrossingTimes && orangeGateCrossingTimes.length > 0 && orangeGateCrossingTimes[0] != null && elapsedTime >= orangeGateCrossingTimes[0]) {
+                        newLastOrangeGate = 0;
+                        for (let i = 1; i < orangeGateCrossingTimes.length; i++) {
+                            if (orangeGateCrossingTimes[i] != null && elapsedTime >= orangeGateCrossingTimes[i]) { newLastOrangeGate = i; } else { break; }
+                        }
+                    }
+                    lastOrangeGate = newLastOrangeGate;
+                } else { // During reset, or if time is 0 after reset
+                    if (elapsedTime === 0 && !isResetting && !isScrubbing && !isPaused) {
+                        lastRedGate = (redGateCrossingTimes && redGateCrossingTimes[0] === 0) ? 0 : -1;
+                        lastOrangeGate = (orangeGateCrossingTimes && orangeGateCrossingTimes[0] === 0) ? 0 : -1;
+                    }
+                    else { // Mid-visual reset, keep gates as they were or set to -1
+                        // lastRedGate = -1; lastOrangeGate = -1; // Option: clear during visual reset
+                    }
+                }
+
+                // Leaderboard logic
+                let lastCommonGate = -1;
+                for (let i = 0; i < Math.min(redGateCrossingTimes.length, orangeGateCrossingTimes.length); i++) {
+                    if (
+                        redGateCrossingTimes[i] != null &&
+                        orangeGateCrossingTimes[i] != null &&
+                        elapsedTime >= redGateCrossingTimes[i] &&
+                        elapsedTime >= orangeGateCrossingTimes[i]
+                    ) {
+                        lastCommonGate = i;
+                    } else {
+                        // Stop at first gate not crossed by both
+                        break;
+                    }
+                }
+                let isRedTheLeader = true;
+                let leaderName, secondName, leaderColor, secondColor, leaderTimeVal, secondTimeText;
+                const rColor = `#${KART_LINE_COLORS.red.toString(16).padStart(6,'0')}`;
+                const oColor = `#${KART_LINE_COLORS.orange.toString(16).padStart(6,'0')}`;
+                if (lastCommonGate >= 0) {
+                    const rTime = redGateCrossingTimes[lastCommonGate];
+                    const oTime = orangeGateCrossingTimes[lastCommonGate];
+                    if (rTime != null && oTime != null) {
+                        if (rTime <= oTime) {
+                            isRedTheLeader = true;
+                            leaderName = "Red"; secondName = "Orange"; leaderColor = rColor; secondColor = "inherit";
+                            leaderTimeVal = rTime;
+                            secondTimeText = "+" + (oTime - rTime).toFixed(2) + "s";
+                        } else {
+                            isRedTheLeader = false;
+                            leaderName = "Orange"; secondName = "Red"; leaderColor = oColor; secondColor = "inherit";
+                            leaderTimeVal = oTime;
+                            secondTimeText = "+" + (rTime - oTime).toFixed(2) + "s";
+                        }
+                    } else if (rTime != null) {
+                        isRedTheLeader = true;
+                        leaderName = "Red"; secondName = "Orange"; leaderColor = rColor; secondColor = "inherit";
+                        leaderTimeVal = rTime;
+                        secondTimeText = "+0.00s";
+                    } else if (oTime != null) {
+                        isRedTheLeader = false;
+                        leaderName = "Orange"; secondName = "Red"; leaderColor = oColor; secondColor = "inherit";
+                        leaderTimeVal = oTime;
+                        secondTimeText = "+0.00s";
+                    } else {
+                        isRedTheLeader = true;
+                        leaderName = "Red"; secondName = "Orange"; leaderColor = rColor; secondColor = "inherit";
+                        leaderTimeVal = 0;
+                        secondTimeText = "+0.00s";
+                    }
+                } else {
+                    // Fallback: use lastRedGate/lastOrangeGate if no common gate
+                    if (lastRedGate === -1 && lastOrangeGate === -1) { isRedTheLeader = true; }
+                    else if (lastRedGate === -1) { isRedTheLeader = false; }
+                    else if (lastOrangeGate === -1) { isRedTheLeader = true; }
+                    else {
+                        if (lastOrangeGate > lastRedGate) { isRedTheLeader = false; }
+                        else if (lastRedGate > lastOrangeGate) { isRedTheLeader = true; }
+                        else {
+                            const rTime = redGateCrossingTimes[lastRedGate];
+                            const oTime = orangeGateCrossingTimes[lastOrangeGate];
+                            if (rTime != null && oTime != null) { isRedTheLeader = (rTime <= oTime); }
+                            else if (rTime != null) { isRedTheLeader = true; }
+                            else if (oTime != null) { isRedTheLeader = false; }
+                            else { isRedTheLeader = true; }
+                        }
+                    }
+                    if (isRedTheLeader) {
+                        leaderName = "Red"; secondName = "Orange"; leaderColor = rColor; secondColor = "inherit";
+                        leaderTimeVal = (lastRedGate !== -1 && redGateCrossingTimes[lastRedGate] != null) ? redGateCrossingTimes[lastRedGate] : 0;
+                        if (lastOrangeGate !== -1 && orangeGateCrossingTimes[lastOrangeGate] != null) {
+                            if (lastRedGate === lastOrangeGate) {
+                                const diff = orangeGateCrossingTimes[lastOrangeGate] - redGateCrossingTimes[lastRedGate];
+                                secondTimeText = (diff >= 0 ? "+" : "") + diff.toFixed(2) + "s";
+                            } else { secondTimeText = `Gate ${lastRedGate + 1}`; }
+                        } else { secondTimeText = "+0.00s"; }
+                    } else {
+                        leaderName = "Orange"; secondName = "Red"; leaderColor = oColor; secondColor = "inherit";
+                        leaderTimeVal = (lastOrangeGate !== -1 && orangeGateCrossingTimes[lastOrangeGate] != null) ? orangeGateCrossingTimes[lastOrangeGate] : 0;
+                        if (lastRedGate !== -1 && redGateCrossingTimes[lastRedGate] != null) {
+                            if (lastOrangeGate === lastRedGate) {
+                                const diff = redGateCrossingTimes[lastRedGate] - orangeGateCrossingTimes[lastOrangeGate];
+                                secondTimeText = (diff >= 0 ? "+" : "") + diff.toFixed(2) + "s";
+                            } else { secondTimeText = `Gate ${lastOrangeGate + 1}`; }
+                        } else { secondTimeText = "+0.00s"; }
+                    }
+                }
+
+                // Ensure DOM elements exist before updating
+                if (leaderNameDOM && leaderTimeDOM && secondNameDOM && secondTimeDOM) {
+                    if (isResetting || (elapsedTime < 0.01 && lastRedGate === -1 && lastOrangeGate === -1 && !isScrubbing)) {
+                        leaderNameDOM.textContent = "Red"; leaderNameDOM.style.color = 'inherit'; leaderTimeDOM.textContent = "0.00s";
+                        secondNameDOM.textContent = "Orange"; secondNameDOM.style.color = 'inherit'; secondTimeDOM.textContent = "0.00s";
+                    } else {
+                        // Swap the data, not the DOM elements, to keep P1 styled as P1.
+                        if (isRedTheLeader) {
+                            document.querySelector('#leaderName').textContent = "Red";
+                            document.querySelector('#leaderName').style.color = rColor;
+                            document.querySelector('#leaderTime').textContent = leaderTimeVal.toFixed(2) + "s";
+                            document.querySelector('#secondName').textContent = "Orange";
+                            document.querySelector('#secondName').style.color = "inherit";
+                            document.querySelector('#secondTime').textContent = secondTimeText;
+                        } else {
+                            document.querySelector('#leaderName').textContent = "Orange";
+                            document.querySelector('#leaderName').style.color = oColor;
+                            document.querySelector('#leaderTime').textContent = leaderTimeVal.toFixed(2) + "s";
+                            document.querySelector('#secondName').textContent = "Red";
+                            document.querySelector('#secondName').style.color = "inherit";
+                            document.querySelector('#secondTime').textContent = secondTimeText;
+                        }
+                    }
+                } else {
+                    console.warn('Leaderboard DOM elements missing:', {leaderNameDOM, leaderTimeDOM, secondNameDOM, secondTimeDOM});
+                }
+
+
+                // Camera update
+                if (camTransActive) {
+                    const now = performance.now() / 1000;
+                    const elapsedCam = now - camTransStart;
+                    let alpha = elapsedCam / camTransDur; // Let alpha go beyond 1 to see if it snaps later
+
+                    // CHANGED: Continuously update target for dynamic views during transition
+                    if (currentView === 'kart1' || currentView === 'kart2' || currentView === 'frontView') {
+                        updateCameraTarget(); // Recalculate camTargetPos, camTargetLook, camInitUpTarget
+                    }
+                     alpha = Math.min(alpha, 1.0); // Clamp alpha after potentially updating target
+
+                    camera.position.lerpVectors(camInitPos, camTargetPos, alpha);
+                    const interpolatedLookAt = new THREE.Vector3().lerpVectors(camInitLook, camTargetLook, alpha);
+                    camera.lookAt(interpolatedLookAt);
+                    camera.up.lerpVectors(camInitUp, camInitUpTarget, alpha).normalize(); // Interpolate 'up'
+
+                    if (alpha >= 1.0) {
+                        camTransActive = false;
+                        // Final snap for static views, dynamic views will continue in the 'else' block
+                        if (currentView === 'birdsEye') {
+                            camera.position.copy(camTargetPos);
+                            camera.lookAt(camTargetLook);
+                        }
+                         camera.up.copy(camInitUpTarget); // Ensure final up is correct
+                    }
+                } else { // Not transitioning or transition just ended
+                    updateCameraTarget(); // Update targets based on current view (essential for follow cams)
+                    camera.position.copy(camTargetPos);
+                    camera.lookAt(camTargetLook);
+                    camera.up.copy(camInitUpTarget); // Apply the correct 'up' for the view
+                }
+                renderer.render(scene, camera);
+            }
+            requestAnimationFrame(animate);
+            updateTimelineDisplay();
+            updateKartVisualsAndLogicalState(0);
+
+        } catch (error) { /* ... error handling ... */
+            console.error('Error in animation setup:', error); const errorDiv = document.createElement('div'); errorDiv.className = 'text-red-500 p-5 text-center'; errorDiv.textContent = 'An error occurred: ' + error.message; document.body.insertBefore(errorDiv, document.body.firstChild);
+        }
+    </script>
+</body>
+</html>

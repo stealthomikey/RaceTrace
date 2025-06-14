@@ -1,0 +1,336 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Driver Standings</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="https://public.codepenassets.com/css/normalize-5.0.0.min.css">
+  <style>
+    @import url("https://fonts.googleapis.com/css?family=DM+Sans:400,700&display=swap");
+    
+    /* CSS Custom Properties (Variables) */
+    html {
+      --black: 0;
+      --white: 255;
+      --theme: var(--black); /* Default to light theme text color base */
+      --theme-invert: var(--white); /* Default to light theme background base */
+      
+      --base-full: rgba(var(--theme),var(--theme),var(--theme),1);
+      --base-80: rgba(var(--theme),var(--theme),var(--theme),0.8);
+      --base-60: rgba(var(--theme),var(--theme),var(--theme),0.6);
+      --base-40: rgba(var(--theme),var(--theme),var(--theme),0.4);
+      --base-20: rgba(var(--theme),var(--theme),var(--theme),0.2);
+      --base-5: rgba(var(--theme),var(--theme),var(--theme),0.05);
+      
+      --invert-full: rgba(var(--theme-invert),var(--theme-invert),var(--theme-invert),1);
+      /* --invert-80 to --invert-5 are not used by remaining elements, could be removed if strict */
+
+      --red: #EE3F46;
+      /* --blue: #00A0F5; Not used by remaining elements */
+      --green: #27B768;
+      --first: #F5CD75; /* For P1 highlight */
+      --second: var(--base-60); /* For P2 highlight */
+      --third: #C6906B; /* For P3 highlight */
+    }
+
+    /* Dark theme definition (remains for structural integrity, though no toggle) */
+    html.theme--dark {
+      --theme: var(--white);
+      --theme-invert: var(--black);
+    }
+
+    /* Global Resets and Base Styles */
+    html {
+      box-sizing: border-box;
+      font-size: 62.5%; /* 1rem = 10px */
+    }
+
+    *, *:before, *:after {
+      box-sizing: inherit;
+    }
+
+    html, body {
+      width: 100%;
+      height: 100%; /* Or min-height: 100vh for modern approach */
+    }
+
+    body {
+      font-size: 1.6rem; /* Default font size: 16px */
+      font-family: "DM Sans", system-ui, sans-serif;
+      background: var(--invert-full); /* Page background */
+      color: var(--base-full); /* Default text color */
+      transition: all 100ms ease-out 0s; /* Smooth transition for potential future theme changes */
+    }
+
+    /* Basic element styling */
+    h1, h2, h3, h4, h5, h6 {
+      margin-top: 0;
+      margin-bottom: 1.6rem; /* Consistent spacing */
+    }
+    h4 { font-size: 2.5rem; }
+    h5 { font-size: 2.1rem; }
+    small { font-size: 1.3rem; }
+    p { line-height: 1.5; } /* Readability for paragraphs */
+
+    /* Layout Wrapper */
+    .page-content-wrapper {
+      width: 100%;
+      max-width: 500px; /* Content max width */
+      margin: auto; /* Centering content */
+      padding: 3.2rem 0.8rem; /* Padding around content area */
+    }
+
+    /* Headline Section */
+    .main-headline {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding-bottom: 1.6rem;
+    }
+    .main-headline-title {
+      margin-bottom: 0;
+    }
+    @media screen and (max-width: 768px) {
+      .main-headline {
+        flex-direction: column;
+        text-align: center;
+      }
+      .main-headline-title {
+        margin-bottom: 1.6rem;
+      }
+    }
+
+    /* Status Label (formerly Chip) */
+    .status-label {
+      font-size: 1.2rem;
+      padding: 0.4rem 0.8rem;
+      border-radius: 999px; /* Pill shape */
+      display: inline-block;
+      font-weight: 400;
+      position: relative;
+      border: 1px solid var(--base-20); /* Default border */
+      background: var(--base-20); /* Default background */
+      color: white; /* Default text color for basic chip */
+    }
+    .status-label:after { /* Subtle background effect */
+      content: "";
+      position: absolute;
+      top: 0; bottom: 0; left: 0; right: 0;
+      opacity: 0.12;
+      border-radius: 999px;
+      background: var(--base-20); /* Matches border/background */
+    }
+    .status-label-success {
+      color: var(--green);
+      border-color: var(--green);
+      background: transparent;
+    }
+    .status-label-success:after {
+      background: var(--green);
+    }
+    
+    /* Featured Driver Card (formerly Winner) */
+    .featured-driver-card {
+      padding: 1.6rem;
+      margin-bottom: 3.2rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border: 1px solid var(--first); /* Highlight color for P1 */
+      border-radius: 0.8rem;
+      position: relative;
+    }
+    .featured-driver-card:before { /* Background tint */
+      content: "";
+      position: absolute;
+      top: 0; bottom: 0; left: 0; right: 0;
+      opacity: 0.08;
+      background: var(--first);
+      border-radius: inherit; /* Match parent's border radius */
+    }
+    .featured-driver-image {
+      width: 4.8rem;
+      height: 4.8rem;
+      color: var(--first); /* Icon color */
+    }
+    .featured-driver-content {
+      width: 100%;
+      padding-left: 1.6rem;
+    }
+    .featured-driver-badge {
+      text-transform: uppercase;
+      color: var(--first);
+      font-weight: 700;
+      letter-spacing: 0.05em;
+    }
+    .featured-driver-name { /* Was .c-winner__title */
+      margin-top: 0.8rem;
+      margin-bottom: 0.8rem;
+    }
+    .featured-driver-stats { /* Was .c-winner__info */
+      display: flex;
+    }
+    .featured-driver-stat-item:not(:last-of-type) { /* Was .c-winner__info-item */
+      margin-right: 1.6rem;
+    }
+
+    /* Standings Grid (formerly Table) */
+    .standings-grid {
+      width: 100%;
+      border-spacing: 0; /* Remove default table spacing */
+    }
+    .standings-grid-data-row:nth-of-type(even) .standings-grid-data-cell {
+      background: var(--base-5); /* Zebra striping for rows */
+    }
+    .standings-grid-header-cell {
+      text-align: left; /* Default for header cells */
+      padding: 0.8rem;
+      font-size: 1.3rem;
+      border-bottom: 1px solid var(--base-40);
+      color: var(--base-60);
+    }
+    .standings-grid-data-cell {
+      padding: 0.8rem;
+    }
+
+    /* Ranking Bubble (formerly Place indicator) */
+    .ranking-bubble {
+      display: inline-flex;
+      border-radius: 50%; /* Circular shape */
+      width: 3.2rem;
+      height: 3.2rem;
+      background: var(--base-20); /* Default background */
+      color: var(--invert-full); /* Text color that contrasts with default background */
+      align-items: center;
+      justify-content: center;
+      font-size: 1.4rem;
+      position: relative;
+      border: 2px solid var(--base-20); /* Default border */
+    }
+    .ranking-bubble:before { /* Inner tint/glow effect */
+      content: "";
+      position: absolute;
+      top: 0; bottom: 0; left: 0; right: 0;
+      opacity: 0.15;
+      border-radius: 50%;
+    }
+    .ranking-bubble-first {
+      border-color: var(--first);
+      color: var(--first);
+      background: transparent;
+    }
+    .ranking-bubble-first:before {
+      background: var(--first);
+    }
+    .ranking-bubble-second {
+      border-color: var(--second);
+      color: var(--second);
+      background: transparent;
+    }
+    .ranking-bubble-second:before {
+      background: var(--second);
+    }
+    .ranking-bubble-third {
+      border-color: var(--third);
+      color: var(--third);
+      background: transparent;
+    }
+    .ranking-bubble-third:before {
+      background: var(--third);
+    }
+
+    /* Text Utility Classes (renamed and reduced set) */
+    .align-text-center { text-align: center !important; }
+    .align-text-right { text-align: right !important; }
+    .text-emphasis-danger { color: var(--red) !important; }
+    .text-emphasis-secondary { color: var(--base-60) !important; }
+
+  </style>
+</head>
+<body>
+
+<div class="page-content-wrapper" id="wrapper">
+  <div class="main-headline">
+    <h4 class="main-headline-title">
+      <small class="text-emphasis-danger">FORMULA 1</small><br />
+      Driver Standings <small class="text-emphasis-secondary">(2025)</small>
+    </h4>
+    <span class="status-label status-label-success">Season in Progress</span>
+  </div>
+
+  <div class="featured-driver-card">
+      <div class="featured-driver-image">
+          <svg viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="12" cy="8" r="7"></circle>
+              <polyline points="8.21 13.89 7 23 12 20 17 23 15.79 13.88"></polyline>
+          </svg>
+      </div>
+      <div class="featured-driver-content">
+          <small class="featured-driver-badge">Current Leader</small>
+          <h5 class="featured-driver-name">Max Verstappen</h5>
+          <div class="featured-driver-stats">
+              <small class="featured-driver-stat-item"><strong>Red Bull</strong></small>
+              <small class="featured-driver-stat-item">Wins: <strong>9</strong></small>
+              <small class="featured-driver-stat-item">Points: <strong>437</strong></small>
+          </div>
+      </div>
+  </div>
+
+  <table class="standings-grid">
+    <thead class="standings-grid-header">
+      <tr class="standings-grid-header-row">
+        <th class="standings-grid-header-cell align-text-center">Place</th>
+        <th class="standings-grid-header-cell">Driver</th>
+        <th class="standings-grid-header-cell">Wins</th>
+        <th class="standings-grid-header-cell align-text-right">Points</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr class="standings-grid-data-row">
+        <td class="standings-grid-data-cell cell-driver-position align-text-center"><span class="ranking-bubble ranking-bubble-first">1</span></td>
+        <td class="standings-grid-data-cell cell-driver-details">Max Verstappen<br><small style="opacity: .4;">Red Bull</small></td>
+        <td class="standings-grid-data-cell cell-driver-wins"><small>9</small></td>
+        <td class="standings-grid-data-cell cell-driver-points align-text-right"><strong>437</strong></td>
+      </tr>
+      <tr class="standings-grid-data-row">
+        <td class="standings-grid-data-cell cell-driver-position align-text-center"><span class="ranking-bubble ranking-bubble-second">2</span></td>
+        <td class="standings-grid-data-cell cell-driver-details">Lando Norris<br><small style="opacity: .4;">McLaren</small></td>
+        <td class="standings-grid-data-cell cell-driver-wins"><small>4</small></td>
+        <td class="standings-grid-data-cell cell-driver-points align-text-right"><strong>374</strong></td>
+      </tr>
+      <tr class="standings-grid-data-row">
+        <td class="standings-grid-data-cell cell-driver-position align-text-center"><span class="ranking-bubble ranking-bubble-third">3</span></td>
+        <td class="standings-grid-data-cell cell-driver-details">Charles Leclerc<br><small style="opacity: .4;">Ferrari</small></td>
+        <td class="standings-grid-data-cell cell-driver-wins"><small>3</small></td>
+        <td class="standings-grid-data-cell cell-driver-points align-text-right"><strong>356</strong></td>
+      </tr>
+      <tr class="standings-grid-data-row">
+        <td class="standings-grid-data-cell cell-driver-position align-text-center"><span class="ranking-bubble">4</span></td>
+        <td class="standings-grid-data-cell cell-driver-details">Oscar Piastri<br><small style="opacity: .4;">McLaren</small></td>
+        <td class="standings-grid-data-cell cell-driver-wins"><small>2</small></td>
+        <td class="standings-grid-data-cell cell-driver-points align-text-right"><strong>292</strong></td>
+      </tr>
+      <tr class="standings-grid-data-row">
+        <td class="standings-grid-data-cell cell-driver-position align-text-center"><span class="ranking-bubble">5</span></td>
+        <td class="standings-grid-data-cell cell-driver-details">Carlos Sainz<br><small style="opacity: .4;">Ferrari</small></td>
+        <td class="standings-grid-data-cell cell-driver-wins"><small>2</small></td>
+        <td class="standings-grid-data-cell cell-driver-points align-text-right"><strong>290</strong></td>
+      </tr>
+      <tr class="standings-grid-data-row">
+        <td class="standings-grid-data-cell cell-driver-position align-text-center"><span class="ranking-bubble">6</span></td>
+        <td class="standings-grid-data-cell cell-driver-details">George Russell<br><small style="opacity: .4;">Mercedes</small></td>
+        <td class="standings-grid-data-cell cell-driver-wins"><small>2</small></td>
+        <td class="standings-grid-data-cell cell-driver-points align-text-right"><strong>245</strong></td>
+      </tr>
+      <tr class="standings-grid-data-row">
+        <td class="standings-grid-data-cell cell-driver-position align-text-center"><span class="ranking-bubble">7</span></td>
+        <td class="standings-grid-data-cell cell-driver-details">Lewis Hamilton<br><small style="opacity: .4;">Mercedes</small></td>
+        <td class="standings-grid-data-cell cell-driver-wins"><small>2</small></td>
+        <td class="standings-grid-data-cell cell-driver-points align-text-right"><strong>223</strong></td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+
+</body>
+</html>

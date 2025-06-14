@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>RaceTrace - Playback</title>
     <style>
-        /* --- Global & Session Page Styles --- */
+        /* --- Global & Session Page Styles (from session.html) --- */
         @import url("https://fonts.googleapis.com/css?family=DM+Sans:400,700&display=swap");
 
         :root {
@@ -15,6 +15,7 @@
             --theme-invert: var(--white);
             
             --base-full: rgba(var(--theme),var(--theme),var(--theme),1);
+            --base-80: rgba(var(--theme),var(--theme),var(--theme),0.8);
             --base-60: rgba(var(--theme),var(--theme),var(--theme),0.6);
             --base-40: rgba(var(--theme),var(--theme),var(--theme),0.4);
             --base-20: rgba(var(--theme),var(--theme),var(--theme),0.2);
@@ -103,7 +104,7 @@
                 flex-direction: row; 
             }
             .playback-area {
-                order: -1;
+                order: -1; /* On desktop, move playback to the left */
             }
         }
         
@@ -120,7 +121,7 @@
             min-width: 280px;
         }
 
-        /* Leaderboard Styles */
+        /* --- Leaderboard Styles --- */
         .leaderboard-header {
             margin-bottom: 1.6rem;
         }
@@ -226,7 +227,7 @@
         .align-text-center { text-align: center !important; }
         .align-text-right { text-align: right !important; }
         
-        /* Playback & Controls Styles */
+        /* --- Playback & Controls Styles --- */
         #canvas-container, #controls, #timeline {
             border: 1px solid #e0e0e0;
             border-radius: 8px;
@@ -265,10 +266,10 @@
         }
         
         #timeline-controls button {
-            background: var(--red-color); color: #fff; border: none;
-            border-radius: 50%; width: 36px; height: 36px; font-size: 1.6rem;
-            cursor: pointer; display: flex; align-items: center; justify-content: center;
-            transition: background-color 0.3s ease;
+             background: var(--red-color); color: #fff; border: none;
+             border-radius: 50%; width: 36px; height: 36px; font-size: 1.6rem;
+             cursor: pointer; display: flex; align-items: center; justify-content: center;
+             transition: background-color 0.3s ease;
         }
         #timeline-controls button:hover {
             background: #c0392b;
@@ -319,16 +320,16 @@
             <aside class="leaderboard-area">
                 <div class="leaderboard-header">
                     <h4 class="main-headline-title">
-                        <span class="title-line-1">FASTLANE</span>
-                        <div class="title-line-2">
-                            <span class="live-race-text">Race Playback</span>
-                            <div id="customLapSelectorContainer" class="custom-lap-selector-container">
-                                <span id="currentLapDisplay" class="current-lap-display" tabindex="0" role="button" aria-haspopup="listbox" aria-expanded="false">
+                      <span class="title-line-1">FASTLANE</span>
+                      <div class="title-line-2">
+                          <span class="live-race-text">Race Playback</span>
+                          <div id="customLapSelectorContainer" class="custom-lap-selector-container">
+                              <span id="currentLapDisplay" class="current-lap-display" tabindex="0" role="button" aria-haspopup="listbox" aria-expanded="false">
                                 </span>
-                                <div id="lapDropdownList" class="lap-dropdown-list" role="listbox">
-                                </div>
-                            </div>
-                        </div>
+                              <div id="lapDropdownList" class="lap-dropdown-list" role="listbox">
+                                  </div>
+                          </div>
+                      </div>
                     </h4>
                 </div>
                 <table class="standings-grid">
@@ -362,8 +363,8 @@
                 
                 <div id="controls">
                     <button id="birdsEyeBtn" class="control-btn">Bird's Eye View</button>
-                    <button id="kart1Btn" class="control-btn">Lewis Hamilton</button>
-                    <button id="kart2Btn" class="control-btn">Lando Norris</button>
+                    <button id="kart1Btn" class="control-btn">Kart 1 (Red)</button>
+                    <button id="kart2Btn" class="control-btn">Kart 2 (Orange)</button>
                     <button id="frontViewBtn" class="control-btn">Front View</button>
                 </div>
 
@@ -392,7 +393,6 @@
     <script type="module">
         import * as THREE from 'three';
         import { GLTFLoader } from 'https://cdn.jsdelivr.net/npm/three@0.160.1/examples/jsm/loaders/GLTFLoader.js';
-        // --- NOTE: You will need to host these coordinate files or replace them with your data ---
         import { kartCoordinates, kartLineCoordinates } from './car_cords/carA5_coordinates.js';
         import { kartTwoCoordinates, kartTwoLineCoordinates } from './car_cords/carB777_coordinates.js';
         import { outerCoordinates } from './car_cords/outer.js';
@@ -435,45 +435,6 @@
             }
             if (timingGates.length > 0) timingGates[0].name = "Start/Finish";
 
-            // --- Helper function to create an offset path for track limits ---
-            function createOffsetCurve(points, offset) {
-                if (!points || points.length < 3) return [];
-                const offsetPoints = [];
-                const vec_p = points.map(p => new THREE.Vector2(p.x, p.y));
-
-                for (let i = 0; i < vec_p.length; i++) {
-                    const p_prev = vec_p[(i - 1 + vec_p.length) % vec_p.length];
-                    const p_curr = vec_p[i];
-                    const p_next = vec_p[(i + 1) % vec_p.length];
-
-                    const v_in = new THREE.Vector2().subVectors(p_curr, p_prev).normalize();
-                    const v_out = new THREE.Vector2().subVectors(p_next, p_curr).normalize();
-
-                    const n_in = new THREE.Vector2(-v_in.y, v_in.x);
-                    const n_out = new THREE.Vector2(-v_out.y, v_out.x);
-                    
-                    const miter_dir = new THREE.Vector2().addVectors(n_in, n_out).normalize();
-                    
-                    const cos_angle = v_in.dot(v_out);
-                    // Clamp to avoid Math.sqrt of negative number
-                    const cos_half_angle = Math.sqrt(Math.max(0, (cos_angle + 1) / 2));
-                    
-                    if (cos_half_angle < 0.0001) {
-                        const new_point = new THREE.Vector2().addVectors(p_curr, n_out.multiplyScalar(offset));
-                        offsetPoints.push({ x: new_point.x, y: new_point.y });
-                        continue;
-                    }
-
-                    const miter_len = offset / cos_half_angle;
-
-                    const offset_vec = miter_dir.multiplyScalar(miter_len);
-                    const new_point = new THREE.Vector2().addVectors(p_curr, offset_vec);
-                    
-                    offsetPoints.push({ x: new_point.x, y: new_point.y });
-                }
-                return offsetPoints;
-            }
-
             function createTrack(outerCoords, innerCoords) {
                 const texLoader = new THREE.TextureLoader();
                 const asphalt = texLoader.load('textures/asphalt.jpg', () => renderer.render(scene, camera));
@@ -496,63 +457,15 @@
                 return mesh;
             }
             scene.add(createTrack(outerCoordinates, innerCoordinates));
-            
-            // --- Soft Cylindrical Grid ---
 
-            const gridGroup = new THREE.Group();
-            const lineMaterial = new THREE.MeshBasicMaterial({
-            color: 0xdddddd,
-            transparent: true, // Enable transparency
-            opacity: 0.95      // 5% transparent (95% opaque)
-            });
-
-            const spacing = 50;
-            const size = 5000;
-            const halfSize = size / 2;
-            const zOffset = 0.01;      // Place grid slightly in front of the wall
-            const cylinderRadius = 0.1; // How thick the lines are
-
-            // Vertical cylinders (constant X, varying Y)
-            for (let x = -halfSize; x <= halfSize; x += spacing) {
-            // CylinderGeometry(radiusTop, radiusBottom, height, radialSegments)
-            const geo = new THREE.CylinderGeometry(cylinderRadius, cylinderRadius, size, 8);
-            const cylinder = new THREE.Mesh(geo, lineMaterial);
-
-            // Position the cylinder at the correct 'x' and in the middle of the 'y' axis
-            cylinder.position.set(x, 0, zOffset);
-            
-            gridGroup.add(cylinder);
-            }
-
-            // Horizontal cylinders (constant Y, varying X)
-            for (let y = -halfSize; y <= halfSize; y += spacing) {
-            const geo = new THREE.CylinderGeometry(cylinderRadius, cylinderRadius, size, 8);
-            const cylinder = new THREE.Mesh(geo, lineMaterial);
-
-            // Position the cylinder
-            cylinder.position.set(0, y, zOffset);
-            
-            // Rotate the cylinder to be horizontal
-            cylinder.rotation.z = Math.PI / 2;
-
-            gridGroup.add(cylinder);
-            }
-
-            scene.add(gridGroup);
-
-            // Your wall (originally called floor)
-            const floorGeo = new THREE.PlaneGeometry(5000, 5000);
-            const floorMat = new THREE.MeshStandardMaterial({
-            color: 0x483C6C,
-            metalness: 0.1,
-            roughness: 0.9,
-            });
+            const floorGeo = new THREE.PlaneGeometry(3800, 2600);
+            const floorTexLoader = new THREE.TextureLoader();
+            const grass = floorTexLoader.load('textures/grass.jpg', () => renderer.render(scene, camera));
+            grass.wrapS = grass.wrapT = THREE.RepeatWrapping; grass.repeat.set(100, 100);
+            const floorMat = new THREE.MeshStandardMaterial({ map: grass, metalness: 0.1, roughness: 0.9 });
             const floor = new THREE.Mesh(floorGeo, floorMat);
-            floor.position.y = 0; // Centered vertically at 0
-            // No rotation means it stays upright in the XY plane
+            floor.position.z = -0.01; floor.receiveShadow = true;
             scene.add(floor);
-
-            scene.background = new THREE.Color(0x483C6C); // Sky blue background
 
             const KART_LINE_COLORS = { red: 0xDD7777, orange: 0xFFB366 };
             function createFlatRacingLine(path, color, width) {
@@ -574,42 +487,6 @@
                 geo.setIndex(inds);
                 return new THREE.Mesh(geo, new THREE.MeshBasicMaterial({ color: color, side: THREE.DoubleSide }));
             }
-
-            // --- Function to create track limit lines on the tarmac ---
-            function createTrackLimitLine(path, color, width) {
-                const pts = path.map(c => new THREE.Vector3(c.x, c.y, 0.51)); // Z-value just above the track surface
-                if (pts.length < 2) return new THREE.Group();
-                const verts = [], inds = [];
-                for (let i = 0; i < pts.length; i++) {
-                    const curr = pts[i], next = pts[(i + 1) % pts.length];
-                    const dir = new THREE.Vector3().subVectors(next, curr).normalize();
-                    const norm = new THREE.Vector3(-dir.y, dir.x, 0).multiplyScalar(width / 2);
-                    verts.push( curr.x + norm.x, curr.y + norm.y, curr.z, curr.x - norm.x, curr.y - norm.y, curr.z );
-                }
-                for (let i = 0; i < pts.length; i++) {
-                    const c1 = i * 2, c2 = i * 2 + 1, n1 = ((i + 1) % pts.length) * 2, n2 = ((i + 1) % pts.length) * 2 + 1;
-                    inds.push(c1, c2, n1, c2, n2, n1);
-                }
-                const geo = new THREE.BufferGeometry();
-                geo.setAttribute('position', new THREE.Float32BufferAttribute(verts, 3));
-                geo.setIndex(inds);
-                return new THREE.Mesh(geo, new THREE.MeshBasicMaterial({ color: color, side: THREE.DoubleSide }));
-            }
-
-            // --- Add Track Limit Lines ---
-            const trackLimitWidth = 0.8; // Line width is 1 unit.
-            const gapFromEdge = 0.5; // A small gap between the track edge and the line.
-            const centerlineOffset = gapFromEdge + (trackLimitWidth / 2); // Total offset for the line's center is 1.0 unit
-
-            // For the outer boundary, offset inwards from the edge.
-            const outerLineCenterline = createOffsetCurve(outerCoordinates, -centerlineOffset);
-            // For the inner boundary, offset outwards from the edge (which is inwards into the tarmac).
-            const innerLineCenterline = createOffsetCurve(innerCoordinates, centerlineOffset);
-
-            scene.add(createTrackLimitLine(outerLineCenterline, 0xffffff, trackLimitWidth));
-            scene.add(createTrackLimitLine(innerLineCenterline, 0xffffff, trackLimitWidth));
-
-
             if (kartLineCoordinates.length > 0) scene.add(createFlatRacingLine(kartLineCoordinates, KART_LINE_COLORS.red, 0.8));
             if (kartTwoLineCoordinates.length > 0) scene.add(createFlatRacingLine(kartTwoLineCoordinates, KART_LINE_COLORS.orange, 0.8));
             
@@ -626,11 +503,19 @@
             let redBlock, orangeBlock;
             let adjustedRedCoords = [...kartCoordinates], adjustedOrangeCoords = [...kartTwoCoordinates];
             let redTargetAngle = calculateInitialAngle(adjustedRedCoords), orangeTargetAngle = calculateInitialAngle(adjustedOrangeCoords);
-            
+            let redKartLogicalPosition = { x: 0, y: 0, prevX: 0, prevY: 0, time: 0 };
+            let orangeKartLogicalPosition = { x: 0, y: 0, prevX: 0, prevY: 0, time: 0 };
+
+            function initializeKartLogicalPositions() {
+                if (adjustedRedCoords.length > 0) Object.assign(redKartLogicalPosition, { x: adjustedRedCoords[0].x, y: adjustedRedCoords[0].y, prevX: adjustedRedCoords[0].x, prevY: adjustedRedCoords[0].y, time: adjustedRedCoords[0].time || 0 });
+                if (adjustedOrangeCoords.length > 0) Object.assign(orangeKartLogicalPosition, { x: adjustedOrangeCoords[0].x, y: adjustedOrangeCoords[0].y, prevX: adjustedOrangeCoords[0].x, prevY: adjustedOrangeCoords[0].y, time: adjustedOrangeCoords[0].time || 0 });
+            }
+            initializeKartLogicalPositions();
+
             function createKart(modelPath, callback, colorName) {
                 const loader = new GLTFLoader();
                 loader.load( modelPath, gltf => {
-                        const k = gltf.scene; k.scale.set(0.7, 0.7, 0.7); k.rotation.set(1.5708, -1.5708, 0);
+                        const k = gltf.scene; k.scale.set(0.4, 0.4, 0.4); k.rotation.set(1.5708, -1.5708, 0);
                         k.traverse(n => { if (n.isMesh) n.castShadow = true; });
                         scene.add(k); callback(k);
                     }, undefined, e => {
@@ -644,17 +529,13 @@
             }
 
             createKart('kart.glb', k => {
-                redBlock = k; 
-                if (adjustedRedCoords.length > 0) {
-                    redBlock.position.set(adjustedRedCoords[0].x, adjustedRedCoords[0].y, 0.67);
-                }
+                redBlock = k; if (adjustedRedCoords.length > 0 && redBlock) redBlock.position.set(redKartLogicalPosition.x, redKartLogicalPosition.y, 0.67);
+                redTargetAngle = calculateInitialAngle(adjustedRedCoords); if (redBlock) redBlock.rotation.y = redTargetAngle + rotationOffset;
             }, 'red');
 
             createKart('kart2.glb', k => {
-                orangeBlock = k;
-                if (adjustedOrangeCoords.length > 0) {
-                    orangeBlock.position.set(adjustedOrangeCoords[0].x, adjustedOrangeCoords[0].y, 0.67);
-                }
+                orangeBlock = k; if (adjustedOrangeCoords.length > 0 && orangeBlock) orangeBlock.position.set(orangeKartLogicalPosition.x, orangeKartLogicalPosition.y, 0.67);
+                orangeTargetAngle = calculateInitialAngle(adjustedOrangeCoords); if (orangeBlock) orangeBlock.rotation.y = orangeTargetAngle + rotationOffset;
             }, 'orange');
 
             const ambLight = new THREE.AmbientLight(0xffffff, 0.7); scene.add(ambLight);
@@ -766,77 +647,52 @@
             rewindBtn.addEventListener('click', () => { elapsedTime = Math.max(0, elapsedTime-1); updateResetStateAndGatesForElapsedTime(); updateKartVisualsAndLogicalState(elapsedTime); timelineSliderEl.value = elapsedTime*1000; updateTimelineDisplay(); });
             fastForwardBtn.addEventListener('click', () => { elapsedTime = Math.min(adjustedMaxLapDuration, elapsedTime+1); updateResetStateAndGatesForElapsedTime(); updateKartVisualsAndLogicalState(elapsedTime); timelineSliderEl.value = elapsedTime*1000; updateTimelineDisplay(); });
 
-            // --- START OF UNALTERED BUTTON LOGIC FROM workinglogic.html ---
             joinBtn.addEventListener('click', () => {
-                if (!redBlock || !orangeBlock || kartCoordinates.length === 0 || kartTwoCoordinates.length === 0) {
-                    console.warn("Cannot join: Kart models or original paths not ready."); return;
-                }
-                let leaderOriginalCoords, followerOriginalCoords, leaderAdjustedCoords, followerAdjustedCoords, leaderKartBlock, followerKartBlock, leaderLapDuration, followerLapDuration;
-                let isRedCurrentlyLeader;
-
-                if (lastRedGate === -1 && lastOrangeGate === -1) { isRedCurrentlyLeader = true; }
-                else if (lastRedGate === -1) { isRedCurrentlyLeader = false; } else if (lastOrangeGate === -1) { isRedCurrentlyLeader = true; }
-                else {
-                    if (lastOrangeGate > lastRedGate) { isRedCurrentlyLeader = false; }
-                    else if (lastRedGate > lastOrangeGate) { isRedCurrentlyLeader = true; }
-                    else { isRedCurrentlyLeader = (redGateCrossingTimes[lastRedGate] != null && orangeGateCrossingTimes[lastOrangeGate] != null && redGateCrossingTimes[lastRedGate] <= orangeGateCrossingTimes[lastOrangeGate]); }
-                }
-
-                if (isRedCurrentlyLeader) {
-                    leaderOriginalCoords = kartCoordinates; followerOriginalCoords = kartTwoCoordinates; leaderAdjustedCoords = adjustedRedCoords; followerAdjustedCoords = adjustedOrangeCoords; leaderKartBlock = redBlock; followerKartBlock = orangeBlock; leaderLapDuration = lapDurRed; followerLapDuration = lapDurOrange;
-                } else {
-                    leaderOriginalCoords = kartTwoCoordinates; followerOriginalCoords = kartCoordinates; leaderAdjustedCoords = adjustedOrangeCoords; followerAdjustedCoords = adjustedRedCoords; leaderKartBlock = orangeBlock; followerKartBlock = redBlock; leaderLapDuration = lapDurOrange; followerLapDuration = lapDurRed;
-                }
-                let leaderCurrentX, leaderCurrentY, leaderCurrentAngle; let leaderPosFound = false;
-                if (leaderAdjustedCoords.length > 0) {
-                    for (let i = 0; i < leaderAdjustedCoords.length - 1; i++) {
-                        const currT = leaderAdjustedCoords[i].time; const nextT = leaderAdjustedCoords[i + 1].time;
-                        if (elapsedTime >= currT && elapsedTime <= nextT) {
-                            const frac = (nextT === currT) ? 0 : (elapsedTime - currT) / (nextT - currT);
-                            leaderCurrentX = THREE.MathUtils.lerp(leaderAdjustedCoords[i].x, leaderAdjustedCoords[i + 1].x, frac);
-                            leaderCurrentY = THREE.MathUtils.lerp(leaderAdjustedCoords[i].y, leaderAdjustedCoords[i + 1].y, frac);
-                            const dx = leaderAdjustedCoords[i+1].x - leaderAdjustedCoords[i].x; const dy = leaderAdjustedCoords[i+1].y - leaderAdjustedCoords[i].y;
-                            if (Math.sqrt(dx*dx + dy*dy) > 0.01) leaderCurrentAngle = Math.atan2(dy, dx); else leaderCurrentAngle = (isRedCurrentlyLeader ? redTargetAngle : orangeTargetAngle);
-                            leaderPosFound = true; break;
-                        }
+                if (!redBlock || !orangeBlock || kartCoordinates.length === 0 || kartTwoCoordinates.length === 0) return;
+                let isRedLeader = (lastRedGate > lastOrangeGate) || (lastRedGate === lastOrangeGate && redGateCrossingTimes[lastRedGate] <= orangeGateCrossingTimes[lastOrangeGate]);
+                const [leaderOrig, followerOrig] = isRedLeader ? [kartCoordinates, kartTwoCoordinates] : [kartTwoCoordinates, kartCoordinates];
+                const [leaderAdj, followerAdj] = isRedLeader ? [adjustedRedCoords, adjustedOrangeCoords] : [adjustedRedCoords, adjustedOrangeCoords];
+                const [leaderBlock, followerBlock] = isRedLeader ? [redBlock, orangeBlock] : [orangeBlock, redBlock];
+                const [leaderLap, followerLap] = isRedLeader ? [lapDurRed, lapDurOrange] : [lapDurOrange, lapDurRed];
+                
+                let leaderX, leaderY, leaderAngle;
+                for (let i=0; i < leaderAdj.length-1; i++) {
+                    if (elapsedTime >= leaderAdj[i].time && elapsedTime <= leaderAdj[i+1].time) {
+                        const frac = (leaderAdj[i+1].time === leaderAdj[i].time) ? 0 : (elapsedTime - leaderAdj[i].time) / (leaderAdj[i+1].time - leaderAdj[i].time);
+                        leaderX = THREE.MathUtils.lerp(leaderAdj[i].x, leaderAdj[i+1].x, frac);
+                        leaderY = THREE.MathUtils.lerp(leaderAdj[i].y, leaderAdj[i+1].y, frac);
+                        leaderAngle = Math.atan2(leaderAdj[i+1].y - leaderAdj[i].y, leaderAdj[i+1].x - leaderAdj[i].x);
+                        break;
                     }
-                    if (!leaderPosFound) { if (elapsedTime >= leaderAdjustedCoords[leaderAdjustedCoords.length-1].time && leaderAdjustedCoords.length>0) { leaderCurrentX = leaderAdjustedCoords[leaderAdjustedCoords.length - 1].x; leaderCurrentY = leaderAdjustedCoords[leaderAdjustedCoords.length - 1].y; if (leaderAdjustedCoords.length > 1) { const dx = leaderAdjustedCoords[leaderAdjustedCoords.length-1].x - leaderAdjustedCoords[leaderAdjustedCoords.length-2].x; const dy = leaderAdjustedCoords[leaderAdjustedCoords.length-1].y - leaderAdjustedCoords[leaderAdjustedCoords.length-2].y; if (Math.sqrt(dx*dx + dy*dy) > 0.01) leaderCurrentAngle = Math.atan2(dy, dx); else leaderCurrentAngle = (isRedCurrentlyLeader ? redTargetAngle : orangeTargetAngle); } else { leaderCurrentAngle = (isRedCurrentlyLeader ? redTargetAngle : orangeTargetAngle); }} else if (leaderAdjustedCoords.length>0) { leaderCurrentX = leaderAdjustedCoords[0].x; leaderCurrentY = leaderAdjustedCoords[0].y; if (leaderAdjustedCoords.length > 1) { const dx = leaderAdjustedCoords[1].x - leaderAdjustedCoords[0].x; const dy = leaderAdjustedCoords[1].y - leaderAdjustedCoords[0].y; if (Math.sqrt(dx*dx + dy*dy) > 0.01) leaderCurrentAngle = Math.atan2(dy, dx); else leaderCurrentAngle = (isRedCurrentlyLeader ? redTargetAngle : orangeTargetAngle); } else { leaderCurrentAngle = (isRedCurrentlyLeader ? redTargetAngle : orangeTargetAngle); }} else return; }
-                } else return;
-                let minDistanceSq = Infinity; let closestPointIndexOnFollowerOriginalPath = 0; let followerNewStartX, followerNewStartY;
-                for (let i = 0; i < followerOriginalCoords.length; i++) { const pt = followerOriginalCoords[i]; const dx = pt.x - leaderCurrentX; const dy = pt.y - leaderCurrentY; const distanceSq = dx * dx + dy * dy; if (distanceSq < minDistanceSq) { minDistanceSq = distanceSq; closestPointIndexOnFollowerOriginalPath = i; followerNewStartX = pt.x; followerNewStartY = pt.y; }}
-                if (followerNewStartX === undefined) return;
-                const newFollowerPath = []; newFollowerPath.push({ x: followerNewStartX, y: followerNewStartY, time: elapsedTime }); let lastTimeInNewPath = elapsedTime;
-                for (let i = 1; i < followerOriginalCoords.length; i++) { const currentOriginalIdx = (closestPointIndexOnFollowerOriginalPath + i) % followerOriginalCoords.length; const prevOriginalIdx = (closestPointIndexOnFollowerOriginalPath + i - 1 + followerOriginalCoords.length) % followerOriginalCoords.length; const originalPoint = followerOriginalCoords[currentOriginalIdx]; const prevOriginalPoint = followerOriginalCoords[prevOriginalIdx]; let timeInterval = originalPoint.time - prevOriginalPoint.time; if (timeInterval < 0) timeInterval += followerLapDuration; timeInterval = Math.max(0.001, timeInterval); const newTime = lastTimeInNewPath + timeInterval; newFollowerPath.push({ x: originalPoint.x, y: originalPoint.y, time: newTime }); lastTimeInNewPath = newTime; }
-                newFollowerPath.sort((a, b) => a.time - b.time);
-                let newFollowerAngleForVisuals; if (newFollowerPath.length > 1) { const dx = newFollowerPath[1].x - newFollowerPath[0].x; const dy = newFollowerPath[1].y - newFollowerPath[0].y; newFollowerAngleForVisuals = (Math.sqrt(dx*dx+dy*dy) > 0.01) ? Math.atan2(dy, dx) : leaderCurrentAngle; } else { newFollowerAngleForVisuals = leaderCurrentAngle; }
-                followerKartBlock.position.set(followerNewStartX, followerNewStartY, 0.67); followerKartBlock.rotation.y = newFollowerAngleForVisuals + rotationOffset;
-                if (isRedCurrentlyLeader) {
-                    adjustedOrangeCoords = newFollowerPath;
-                    orangeTargetAngle = newFollowerAngleForVisuals;
-                    orangeGateCrossingTimes = computeGateCrossings(adjustedOrangeCoords, timingGates);
-                } else {
-                    adjustedRedCoords = newFollowerPath;
-                    redTargetAngle = newFollowerAngleForVisuals;
-                    redGateCrossingTimes = computeGateCrossings(adjustedRedCoords, timingGates);
                 }
-                const leaderFinalTime = leaderAdjustedCoords.length > 0 ? leaderAdjustedCoords[leaderAdjustedCoords.length -1].time : 0;
-                const followerFinalTime = newFollowerPath.length > 0 ? newFollowerPath[newFollowerPath.length -1].time : 0;
-                adjustedMaxLapDuration = Math.max(leaderFinalTime, followerFinalTime) + resetDelay; timelineSliderEl.max = adjustedMaxLapDuration * 1000;
-                updateKartVisualsAndLogicalState(elapsedTime); updateTimelineDisplay(); if (!isPaused && !isScrubbing) lastTimestamp = performance.now();
-            });
+                if(leaderX === undefined) return;
 
+                let bestIdx = 0, minDistSq = Infinity;
+                for(let i=0; i < followerOrig.length; i++) {
+                    const distSq = Math.hypot(followerOrig[i].x - leaderX, followerOrig[i].y - leaderY);
+                    if(distSq < minDistSq) { minDistSq = distSq; bestIdx = i; }
+                }
+                const newPath = [];
+                for(let i=0; i < followerOrig.length; i++) {
+                    const origIdx = (bestIdx + i) % followerOrig.length;
+                    const prevOrigIdx = (bestIdx + i - 1 + followerOrig.length) % followerOrig.length;
+                    const timeInterval = (followerOrig[origIdx].time - followerOrig[prevOrigIdx].time + followerLap) % followerLap;
+                    const newTime = (i === 0) ? elapsedTime : newPath[i-1].time + timeInterval;
+                    newPath.push({x: followerOrig[origIdx].x, y: followerOrig[origIdx].y, time: newTime});
+                }
+                
+                if (isRedLeader) adjustedOrangeCoords = newPath; else adjustedRedCoords = newPath;
+                if (isRedLeader) orangeGateCrossingTimes = computeGateCrossings(newPath, timingGates); else redGateCrossingTimes = computeGateCrossings(newPath, timingGates);
+            });
             unjoinBtn.addEventListener('click', () => {
                 adjustedRedCoords = [...kartCoordinates]; adjustedOrangeCoords = [...kartTwoCoordinates];
-                redGateCrossingTimes = computeGateCrossings(adjustedRedCoords, timingGates);
-                orangeGateCrossingTimes = computeGateCrossings(adjustedOrangeCoords, timingGates, "orange");
+                redGateCrossingTimes = computeGateCrossings(adjustedRedCoords, timingGates); orangeGateCrossingTimes = computeGateCrossings(adjustedOrangeCoords, timingGates);
                 elapsedTime = 0; timelineSliderEl.value = 0; lastRedGate = -1; lastOrangeGate = -1;
-                lastTimestamp = performance.now(); isPaused = false; isResetting = false; playPauseBtn.innerHTML = '⏸';
-                redTargetAngle = calculateInitialAngle(adjustedRedCoords); if (redBlock && adjustedRedCoords.length > 0) { redBlock.position.set(adjustedRedCoords[0].x, adjustedRedCoords[0].y, 0.67); redBlock.rotation.y = redTargetAngle + rotationOffset; }
-                orangeTargetAngle = calculateInitialAngle(adjustedOrangeCoords); if (orangeBlock && adjustedOrangeCoords.length > 0) { orangeBlock.position.set(adjustedOrangeCoords[0].x, adjustedOrangeCoords[0].y, 0.67); orangeBlock.rotation.y = orangeTargetAngle + rotationOffset; }
+                isResetting = false; initializeKartLogicalPositions();
+                if (redBlock) { redTargetAngle = calculateInitialAngle(adjustedRedCoords); redBlock.position.set(adjustedRedCoords[0].x, adjustedRedCoords[0].y, 0.67); redBlock.rotation.y = redTargetAngle + rotationOffset; }
+                if (orangeBlock) { orangeTargetAngle = calculateInitialAngle(adjustedOrangeCoords); orangeBlock.position.set(adjustedOrangeCoords[0].x, adjustedOrangeCoords[0].y, 0.67); orangeBlock.rotation.y = orangeTargetAngle + rotationOffset; }
                 adjustedMaxLapDuration = Math.max(lapDurRed, lapDurOrange) + resetDelay; timelineSliderEl.max = adjustedMaxLapDuration * 1000;
-                updateKartVisualsAndLogicalState(elapsedTime); updateTimelineDisplay();
             });
-            // --- END OF UNALTERED BUTTON LOGIC ---
 
             function updateTimelineDisplay() {
                 const container = timelineSliderEl.parentElement; if (!container) return;
@@ -876,140 +732,42 @@
             function animate(timestamp) {
                 requestAnimationFrame(animate);
                 if (!redBlock || !orangeBlock) return;
-                
                 if (!isScrubbing && !isPaused) {
                     elapsedTime += (timestamp - lastTimestamp) / 1000; lastTimestamp = timestamp; updateResetStateAndGatesForElapsedTime();
                     if (!isResetting) timelineSliderEl.value = elapsedTime * 1000;
                 }
-                
-                updateKartVisualsAndLogicalState(elapsedTime);
-                updateTimelineDisplay();
-                
-                // --- START OF UNALTERED TIMING LOGIC FROM workinglogic.html ---
-                
-                // Gate update logic
+                updateKartVisualsAndLogicalState(elapsedTime); updateTimelineDisplay();
                 if (!isResetting) {
-                    let newLastRedGate = -1;
-                    if (redGateCrossingTimes && redGateCrossingTimes.length > 0 && redGateCrossingTimes[0] != null && elapsedTime >= redGateCrossingTimes[0]) {
-                        newLastRedGate = 0;
-                        for (let i = 1; i < redGateCrossingTimes.length; i++) {
-                            if (redGateCrossingTimes[i] != null && elapsedTime >= redGateCrossingTimes[i]) { newLastRedGate = i; } else { break; }
-                        }
-                    }
-                    lastRedGate = newLastRedGate;
-
-                    let newLastOrangeGate = -1;
-                    if (orangeGateCrossingTimes && orangeGateCrossingTimes.length > 0 && orangeGateCrossingTimes[0] != null && elapsedTime >= orangeGateCrossingTimes[0]) {
-                        newLastOrangeGate = 0;
-                        for (let i = 1; i < orangeGateCrossingTimes.length; i++) {
-                            if (orangeGateCrossingTimes[i] != null && elapsedTime >= orangeGateCrossingTimes[i]) { newLastOrangeGate = i; } else { break; }
-                        }
-                    }
-                    lastOrangeGate = newLastOrangeGate;
+                    lastRedGate = redGateCrossingTimes.findLastIndex(t => t !== null && elapsedTime >= t);
+                    lastOrangeGate = orangeGateCrossingTimes.findLastIndex(t => t !== null && elapsedTime >= t);
                 }
-
-                // Leaderboard and interval logic
-                let lastCommonGate = -1;
-                for (let i = 0; i < Math.min(redGateCrossingTimes.length, orangeGateCrossingTimes.length); i++) {
-                    if (
-                        redGateCrossingTimes[i] != null &&
-                        orangeGateCrossingTimes[i] != null &&
-                        elapsedTime >= redGateCrossingTimes[i] &&
-                        elapsedTime >= orangeGateCrossingTimes[i]
-                    ) {
-                        lastCommonGate = i;
-                    } else {
-                        break;
-                    }
-                }
-                
-                let isRedTheLeader = true;
-                let leaderTimeVal = 0, secondTimeText = "+0.00s";
-
-                if (lastCommonGate >= 0) {
-                    const rTime = redGateCrossingTimes[lastCommonGate];
-                    const oTime = orangeGateCrossingTimes[lastCommonGate];
-                    if (rTime != null && oTime != null) {
-                        if (rTime <= oTime) {
-                            isRedTheLeader = true;
-                            leaderTimeVal = rTime;
-                            secondTimeText = "+" + (oTime - rTime).toFixed(2) + "s";
-                        } else {
-                            isRedTheLeader = false;
-                            leaderTimeVal = oTime;
-                            secondTimeText = "+" + (rTime - oTime).toFixed(2) + "s";
-                        }
-                    } else if (rTime != null) {
-                        isRedTheLeader = true;
-                        leaderTimeVal = rTime;
-                        secondTimeText = "+0.00s";
-                    } else if (oTime != null) {
-                        isRedTheLeader = false;
-                        leaderTimeVal = oTime;
-                        secondTimeText = "+0.00s";
-                    } else {
-                        isRedTheLeader = true;
-                        leaderTimeVal = 0;
-                        secondTimeText = "+0.00s";
-                    }
-                } else {
-                    if (lastRedGate === -1 && lastOrangeGate === -1) { isRedTheLeader = true; }
-                    else if (lastRedGate === -1) { isRedTheLeader = false; }
-                    else if (lastOrangeGate === -1) { isRedTheLeader = true; }
-                    else {
-                        if (lastOrangeGate > lastRedGate) { isRedTheLeader = false; }
-                        else if (lastRedGate > lastOrangeGate) { isRedTheLeader = true; }
-                        else {
-                            const rTime = redGateCrossingTimes[lastRedGate];
-                            const oTime = orangeGateCrossingTimes[lastOrangeGate];
-                            if (rTime != null && oTime != null) { isRedTheLeader = (rTime <= oTime); }
-                            else if (rTime != null) { isRedTheLeader = true; }
-                            else if (oTime != null) { isRedTheLeader = false; }
-                            else { isRedTheLeader = true; }
-                        }
-                    }
-                    if (isRedTheLeader) {
-                        leaderTimeVal = (lastRedGate !== -1 && redGateCrossingTimes[lastRedGate] != null) ? redGateCrossingTimes[lastRedGate] : 0;
-                        if (lastOrangeGate !== -1 && orangeGateCrossingTimes[lastOrangeGate] != null) {
-                            if (lastRedGate === lastOrangeGate) {
-                                const diff = orangeGateCrossingTimes[lastOrangeGate] - redGateCrossingTimes[lastRedGate];
-                                secondTimeText = (diff >= 0 ? "+" : "") + diff.toFixed(2) + "s";
-                            } else { secondTimeText = `Gate ${lastOrangeGate + 1}`; }
-                        } else { secondTimeText = "+0.00s"; }
-                    } else {
-                        leaderTimeVal = (lastOrangeGate !== -1 && orangeGateCrossingTimes[lastOrangeGate] != null) ? orangeGateCrossingTimes[lastOrangeGate] : 0;
-                        if (lastRedGate !== -1 && redGateCrossingTimes[lastRedGate] != null) {
-                            if (lastOrangeGate === lastRedGate) {
-                                const diff = redGateCrossingTimes[lastRedGate] - orangeGateCrossingTimes[lastOrangeGate];
-                                secondTimeText = (diff >= 0 ? "+" : "") + diff.toFixed(2) + "s";
-                            } else { secondTimeText = `Gate ${lastRedGate + 1}`; }
-                        } else { secondTimeText = "+0.00s"; }
-                    }
-                }
-                
-                const leaderId = isRedTheLeader ? "Red" : "Orange";
-
-                // --- END OF UNALTERED TIMING LOGIC ---
+                let leaderId = "Red", secondId = "Orange", leaderTimeVal, secondTimeText;
+                if (lastOrangeGate > lastRedGate) { leaderId = "Orange"; }
+                else if (lastRedGate > lastOrangeGate) { leaderId = "Red"; }
+                else if (lastRedGate !== -1 && redGateCrossingTimes[lastRedGate] > orangeGateCrossingTimes[lastOrangeGate]) { leaderId = "Orange"; }
+                secondId = (leaderId === "Red") ? "Orange" : "Red";
+                const leaderLastGate = (leaderId === "Red") ? lastRedGate : lastOrangeGate;
+                const secondLastGate = (secondId === "Red") ? lastRedGate : lastOrangeGate;
+                const leaderTimeAtGate = (leaderId === "Red") ? redGateCrossingTimes[leaderLastGate] : orangeGateCrossingTimes[leaderLastGate];
+                const secondTimeAtGate = (secondId === "Red") ? redGateCrossingTimes[secondLastGate] : orangeGateCrossingTimes[secondLastGate];
+                leaderTimeVal = leaderTimeAtGate || 0;
+                if (leaderTimeAtGate > 0 && secondTimeAtGate > 0) {
+                    secondTimeText = `+${Math.abs(leaderTimeAtGate - secondTimeAtGate).toFixed(2)}s`;
+                } else secondTimeText = "+0.00s";
 
                 if (leaderDriverCell && secondDriverCell) {
                     if (isResetting || (elapsedTime < 0.01 && !isScrubbing)) {
-                        // Display default state
                         leaderDriverCell.innerHTML = `<strong>${driverData["Red"].name}</strong><br><small>${driverData["Red"].team}</small>`;
                         secondDriverCell.innerHTML = `<strong>${driverData["Orange"].name}</strong><br><small>${driverData["Orange"].team}</small>`;
-                        leaderTimeDOM.textContent = "0.00s"; 
-                        secondTimeDOM.textContent = "0.00s";
+                        leaderTimeDOM.textContent = "0.00s"; secondTimeDOM.textContent = "0.00s";
                     } else {
-                        // Use the calculated variables to update the DOM with correct names
-                        const secondId = isRedTheLeader ? "Orange" : "Red";
-                        const leaderInfo = driverData[leaderId];
-                        const secondInfo = driverData[secondId];
+                        const leaderInfo = driverData[leaderId], secondInfo = driverData[secondId];
                         leaderDriverCell.innerHTML = `<strong>${leaderInfo.name}</strong><br><small>${leaderInfo.team}</small>`;
                         secondDriverCell.innerHTML = `<strong>${secondInfo.name}</strong><br><small>${secondInfo.team}</small>`;
-                        leaderTimeDOM.textContent = (leaderTimeVal || 0).toFixed(2) + "s";
+                        leaderTimeDOM.textContent = leaderTimeVal.toFixed(2) + "s";
                         secondTimeDOM.textContent = secondTimeText;
                     }
                 }
-                
                 if (camTransActive) {
                     const alpha = Math.min((performance.now() / 1000 - camTransStart) / camTransDur, 1.0);
                     if (currentView !== 'birdsEye') updateCameraTarget();
@@ -1033,7 +791,7 @@
     </script>
     <script>
         document.addEventListener('DOMContentLoaded', () => {
-            // Custom Lap Selector Logic
+            // Custom Lap Selector Logic from leaderboard.html
             const customLapSelectorContainer = document.getElementById('customLapSelectorContainer');
             const currentLapDisplay = document.getElementById('currentLapDisplay');
             const lapDropdownList = document.getElementById('lapDropdownList');

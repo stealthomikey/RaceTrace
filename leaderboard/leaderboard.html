@@ -1,0 +1,527 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Live Race Leaderboard</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="https://public.codepenassets.com/css/normalize-5.0.0.min.css">
+  <style>
+    @import url("https://fonts.googleapis.com/css?family=DM+Sans:400,700&display=swap");
+    
+    html {
+      --black: 0;
+      --white: 255;
+      --theme: var(--black);
+      --theme-invert: var(--white);
+      
+      --base-full: rgba(var(--theme),var(--theme),var(--theme),1);
+      --base-80: rgba(var(--theme),var(--theme),var(--theme),0.8);
+      --base-60: rgba(var(--theme),var(--theme),var(--theme),0.6);
+      --base-40: rgba(var(--theme),var(--theme),var(--theme),0.4);
+      --base-20: rgba(var(--theme),var(--theme),var(--theme),0.2);
+      --base-5: rgba(var(--theme),var(--theme),var(--theme),0.05);
+      
+      --invert-full: rgba(var(--theme-invert),var(--theme-invert),var(--theme-invert),1);
+
+      --red: #EE3F46;
+      --green: #27B768;
+      --purple: #800080;
+      --first: #F5CD75;
+      --second: var(--base-60);
+      --third: #C6906B;
+    }
+
+    html.theme--dark {
+      --theme: var(--white);
+      --theme-invert: var(--black);
+    }
+
+    html {
+      box-sizing: border-box;
+      font-size: 62.5%;
+    }
+
+    *, *:before, *:after {
+      box-sizing: inherit;
+    }
+
+    html, body {
+      width: 100%;
+      height: 100%; 
+    }
+
+    body {
+      font-size: 1.6rem;
+      font-family: "DM Sans", system-ui, sans-serif;
+      background: var(--invert-full); 
+      color: var(--base-full); 
+      transition: background 100ms ease-out 0s, color 100ms ease-out 0s; 
+    }
+
+    h1, h2, h3, h4, h5, h6 {
+      margin-top: 0;
+      margin-bottom: 1.6rem; 
+    }
+    h4 { font-size: 2.5rem; }
+    h5 { font-size: 2.1rem; }
+    small { font-size: 1.3rem; }
+    p { line-height: 1.5; } 
+
+    .page-content-wrapper {
+      width: 100%;
+      max-width: 700px; 
+      margin: auto; 
+      padding: 3.2rem 0.8rem; 
+    }
+
+    .main-headline {
+      display: flex;
+      justify-content: space-between;
+      align-items: center; 
+      padding-bottom: 1.6rem;
+    }
+    
+    .main-headline-title { 
+      margin-bottom: 0; 
+    }
+
+    .main-headline-title .title-line-1 {
+      display: block; 
+    }
+    .main-headline-title .title-line-1 small { 
+      /* font-size for FASTLANE is 1.3rem via <small> tag */
+    }
+
+    .main-headline-title .title-line-2 {
+      display: flex; 
+      align-items: baseline; 
+      margin-top: 0.4rem; 
+    }
+    
+    .main-headline-title .live-race-text {
+      margin-right: 0.6rem; 
+      /* font-size inherited from h4 (2.5rem) via title-line-2 */
+    }
+
+    @media screen and (max-width: 768px) {
+      .main-headline {
+        flex-direction: column;
+      }
+      .main-headline-title { 
+        margin-bottom: 1.6rem;
+        text-align: center; 
+      }
+      .main-headline-title .title-line-2 {
+          justify-content: center; 
+      }
+      .header-controls { 
+        margin-top: 0.8rem;
+        justify-content: center;
+      }
+    }
+
+    .status-label {
+      font-size: 1.2rem; padding: 0.4rem 0.8rem; border-radius: 999px; 
+      display: inline-block; font-weight: 400; position: relative;
+      border: 1px solid var(--base-20); background: var(--base-20); color: white; 
+    }
+    .status-label:after { 
+      content: ""; position: absolute; top: 0; bottom: 0; left: 0; right: 0;
+      opacity: 0.12; border-radius: 999px; background: var(--base-20); 
+    }
+    .status-label-live { 
+      color: var(--red); border-color: var(--red); background: transparent;
+    }
+    .status-label-live:after { background: var(--red); }
+    
+    .featured-driver-card {
+      padding: 1.6rem; margin-bottom: 3.2rem; display: flex;
+      justify-content: space-between; align-items: center;
+      border: 1px solid var(--first); border-radius: 0.8rem; position: relative;
+    }
+    .featured-driver-card:before { 
+      content: ""; position: absolute; top: 0; bottom: 0; left: 0; right: 0;
+      opacity: 0.08; background: var(--first); border-radius: inherit; 
+    }
+    .featured-driver-image { width: 4.8rem; height: 4.8rem; color: var(--first); }
+    .featured-driver-content { width: 100%; padding-left: 1.6rem; }
+    .featured-driver-badge {
+      text-transform: uppercase; color: var(--first);
+      font-weight: 700; letter-spacing: 0.05em;
+    }
+    .featured-driver-name { margin-top: 0.8rem; margin-bottom: 0.8rem; }
+    .featured-driver-stats { display: flex; }
+    .featured-driver-stat-item:not(:last-of-type) { margin-right: 1.6rem; }
+
+    .standings-grid { width: 100%; border-spacing: 0; }
+    .standings-grid-data-row:nth-of-type(even) .standings-grid-data-cell { background: var(--base-5); }
+    .standings-grid-header-cell {
+      text-align: left; padding: 0.8rem; font-size: 1.3rem;
+      border-bottom: 1px solid var(--base-40); color: var(--base-60);
+    }
+    .standings-grid-data-cell { padding: 0.8rem; vertical-align: middle; }
+
+    .ranking-bubble {
+      display: inline-flex; border-radius: 50%; width: 3.2rem; height: 3.2rem;
+      background: var(--base-20); color: var(--invert-full); 
+      align-items: center; justify-content: center;
+      font-size: 1.4rem; position: relative; border: 2px solid var(--base-20); 
+    }
+    .ranking-bubble:before { 
+      content: ""; position: absolute; top: 0; bottom: 0; left: 0; right: 0;
+      opacity: 0.15; border-radius: 50%;
+    }
+    .ranking-bubble-first { border-color: var(--first); color: var(--first); background: transparent; }
+    .ranking-bubble-first:before { background: var(--first); }
+    .ranking-bubble-second { border-color: var(--second); color: var(--second); background: transparent; }
+    .ranking-bubble-second:before { background: var(--second); }
+    .ranking-bubble-third { border-color: var(--third); color: var(--third); background: transparent; }
+    .ranking-bubble-third:before { background: var(--third); }
+    
+    .laptime-fastest { color: var(--purple); font-weight: bold; }
+
+    .align-text-center { text-align: center !important; }
+    .align-text-right { text-align: right !important; }
+    .text-emphasis-danger { color: var(--red) !important; }
+    .text-emphasis-secondary { color: var(--base-60) !important; }
+
+    /* Dark Mode Toggle Styles */
+    .header-controls { display: flex; align-items: center; gap: 1rem; }
+    #darkModeToggle {
+      background: transparent; border: 1px solid var(--base-40); color: var(--base-full); 
+      padding: 0.5rem 0.7rem; border-radius: 0.4rem; cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      transition: border-color 100ms ease-out, color 100ms ease-out;
+    }
+    #darkModeToggle:hover { border-color: var(--base-80); }
+    #darkModeToggle svg { width: 1.8rem; height: 1.8rem; transition: fill 100ms ease-out; }
+    html:not(.theme--dark) .sun-icon { display: block; }
+    html:not(.theme--dark) .moon-icon { display: none; }
+    html.theme--dark .sun-icon { display: none; }
+    html.theme--dark .moon-icon { display: block; }
+
+    /* Custom Lap Selector Styles */
+    .custom-lap-selector-container {
+      position: relative; 
+      display: inline-block;
+    }
+
+    .current-lap-display {
+      font-size: 1.3rem; 
+      color: var(--base-60); 
+      /* text-decoration: underline; REMOVED from parent */
+      cursor: pointer;
+      padding: 0.1em 0; 
+      border-radius: 0.2rem; 
+    }
+
+    .current-lap-display .lap-text-segment {
+        text-decoration: none; /* Explicitly no underline */
+    }
+    .current-lap-display .lap-number-underlined {
+        text-decoration: underline;
+    }
+
+    .current-lap-display:hover .lap-number-underlined,
+    .current-lap-display:focus .lap-number-underlined {
+      text-decoration-thickness: 1.5px;
+    }
+    .current-lap-display:focus { /* Overall focus indicator on the clickable element */
+      outline: 1px dashed var(--base-40); 
+      outline-offset: 2px;
+    }
+     html.theme--dark .current-lap-display:focus {
+        outline: 1px dashed var(--base-60);
+     }
+
+    .lap-dropdown-list {
+      display: none; 
+      position: absolute;
+      top: calc(100% + 4px); 
+      left: 50%;
+      transform: translateX(-50%); 
+      background-color: var(--invert-full);
+      border: 1px solid var(--base-40);
+      border-radius: 0.4rem;
+      min-width: 130px; 
+      max-height: 180px; 
+      overflow-y: auto; 
+      z-index: 1000; 
+      box-shadow: 0 2px 5px rgba(var(--theme),var(--theme),var(--theme),0.1);
+    }
+     html.theme--dark .lap-dropdown-list {
+        box-shadow: 0 2px 5px rgba(var(--theme),var(--theme),var(--theme),0.3);
+     }
+
+    .lap-dropdown-list div[role="option"] {
+      padding: 0.6em 0.9em;
+      cursor: pointer;
+      color: var(--base-full);
+      font-size: 1.3rem;
+      white-space: nowrap;
+    }
+
+    .lap-dropdown-list div[role="option"]:hover,
+    .lap-dropdown-list div[role="option"].focused { 
+      background-color: var(--base-5);
+    }
+
+    .lap-dropdown-list div[role="option"][aria-selected="true"] {
+      background-color: var(--base-20); 
+      font-weight: 700; 
+    }
+    html.theme--dark .lap-dropdown-list div[role="option"][aria-selected="true"] {
+        background-color: var(--base-40);
+    }
+
+  </style>
+</head>
+<body>
+
+<div class="page-content-wrapper" id="wrapper">
+  <div class="main-headline">
+    <h4 class="main-headline-title">
+      <span class="title-line-1"><small class="text-emphasis-danger">FASTLANE</small></span>
+      <div class="title-line-2">
+        <span class="live-race-text">Live Race</span>
+        <div id="customLapSelectorContainer" class="custom-lap-selector-container">
+          <span id="currentLapDisplay" class="current-lap-display" tabindex="0" role="button" aria-haspopup="listbox" aria-expanded="false">
+            </span>
+          <div id="lapDropdownList" class="lap-dropdown-list" role="listbox" style="display: none;">
+            </div>
+        </div>
+      </div>
+    </h4>
+    <div class="header-controls">
+      <span class="status-label status-label-live">LIVE</span>
+      <button id="darkModeToggle" aria-label="Toggle dark mode">
+        <svg class="sun-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="18" height="18" fill="currentColor"><path d="M12 2.25a.75.75 0 01.75.75v2.25a.75.75 0 01-1.5 0V3a.75.75 0 01.75-.75zM7.5 12a4.5 4.5 0 119 0 4.5 4.5 0 01-9 0zM18.894 6.166a.75.75 0 00-1.06-1.06l-1.591 1.59a.75.75 0 101.06 1.061l1.591-1.59zM21.75 12a.75.75 0 01-.75.75h-2.25a.75.75 0 010-1.5H21a.75.75 0 01.75.75zM17.834 18.894a.75.75 0 001.06-1.06l-1.59-1.591a.75.75 0 10-1.061 1.06l1.59 1.591zM12 18a.75.75 0 01.75.75V21a.75.75 0 01-1.5 0v-2.25A.75.75 0 0112 18zM7.758 17.303a.75.75 0 00-1.061-1.06l-1.591 1.59a.75.75 0 001.06 1.061l1.591-1.59zM6 12a.75.75 0 01-.75.75H3a.75.75 0 010-1.5h2.25A.75.75 0 016 12zM6.166 7.758a.75.75 0 001.06-1.06L5.634 5.106a.75.75 0 00-1.06 1.06l1.59 1.591z"/></svg>
+        <svg class="moon-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="18" height="18" fill="currentColor" style="display: none;"><path fill-rule="evenodd" d="M9.528 1.718a.75.75 0 01.162.819A8.97 8.97 0 009 6a9 9 0 009 9 8.97 8.97 0 003.463-.69.75.75 0 01.981.98 10.503 10.503 0 01-9.694 6.46c-5.799 0-10.5-4.701-10.5-10.5 0-3.51 1.713-6.638 4.386-8.552a.75.75 0 01.819.162z" clip-rule="evenodd" /></svg>
+      </button>
+    </div>
+  </div>
+
+  <div class="featured-driver-card">
+      <div class="featured-driver-image">
+          <svg viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="12" cy="8" r="7"></circle>
+              <polyline points="8.21 13.89 7 23 12 20 17 23 15.79 13.88"></polyline>
+          </svg>
+      </div>
+      <div class="featured-driver-content">
+          <small class="featured-driver-badge">Current Leader</small>
+          <h5 class="featured-driver-name">Michael Piercey</h5>
+          <div class="featured-driver-stats">
+              <small class="featured-driver-stat-item"><strong>Red Bull</strong></small>
+              <small class="featured-driver-stat-item">Last Lap: <strong>1:18.345</strong></small>
+              <small class="featured-driver-stat-item">Interval: <strong>Leader</strong></small>
+          </div>
+      </div>
+  </div>
+
+  <table class="standings-grid">
+    <thead class="standings-grid-header">
+      <tr class="standings-grid-header-row">
+        <th class="standings-grid-header-cell align-text-center">Pos</th>
+        <th class="standings-grid-header-cell">Driver</th>
+        <th class="standings-grid-header-cell align-text-right">Laptime</th>
+        <th class="standings-grid-header-cell align-text-right">Interval</th>
+        <th class="standings-grid-header-cell align-text-right">Total Time/Status</th> </tr>
+    </thead>
+    <tbody>
+      <tr class="standings-grid-data-row">
+        <td class="standings-grid-data-cell cell-driver-position align-text-center"><span class="ranking-bubble ranking-bubble-first">1</span></td>
+        <td class="standings-grid-data-cell cell-driver-details">Michael Piercey<br><small style="opacity: .4;">Red Bull</small></td>
+        <td class="standings-grid-data-cell cell-driver-laptime align-text-right"><small>1:18.345</small></td>
+        <td class="standings-grid-data-cell cell-driver-interval align-text-right"><small>Leader</small></td>
+        <td class="standings-grid-data-cell cell-driver-totaltime align-text-right"><strong>1:23:45.678</strong></td>
+      </tr>
+      <tr class="standings-grid-data-row">
+        <td class="standings-grid-data-cell cell-driver-position align-text-center"><span class="ranking-bubble ranking-bubble-second">2</span></td>
+        <td class="standings-grid-data-cell cell-driver-details">Callum Davidson<br><small style="opacity: .4;">McLaren</small></td>
+        <td class="standings-grid-data-cell cell-driver-laptime align-text-right"><small class="laptime-fastest">1:17.992</small></td>
+        <td class="standings-grid-data-cell cell-driver-interval align-text-right"><small>+3.572</small></td>
+        <td class="standings-grid-data-cell cell-driver-totaltime align-text-right"><strong>+3.572</strong></td>
+      </tr>
+      <tr class="standings-grid-data-row">
+        <td class="standings-grid-data-cell cell-driver-position align-text-center"><span class="ranking-bubble ranking-bubble-third">3</span></td>
+        <td class="standings-grid-data-cell cell-driver-details">Jonathan Boyd<br><small style="opacity: .4;">Ferrari</small></td>
+        <td class="standings-grid-data-cell cell-driver-laptime align-text-right"><small>1:18.501</small></td>
+        <td class="standings-grid-data-cell cell-driver-interval align-text-right"><small>+1.220</small></td>
+        <td class="standings-grid-data-cell cell-driver-totaltime align-text-right"><strong>+4.792</strong></td>
+      </tr>
+      <tr class="standings-grid-data-row">
+        <td class="standings-grid-data-cell cell-driver-position align-text-center"><span class="ranking-bubble">4</span></td>
+        <td class="standings-grid-data-cell cell-driver-details">Juliusz Wilczynski<br><small style="opacity: .4;">McLaren</small></td>
+        <td class="standings-grid-data-cell cell-driver-laptime align-text-right"><small>1:18.976</small></td>
+        <td class="standings-grid-data-cell cell-driver-interval align-text-right"><small>+5.011</small></td>
+        <td class="standings-grid-data-cell cell-driver-totaltime align-text-right"><strong>+9.803</strong></td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    const htmlElement = document.documentElement;
+    const darkModeToggle = document.getElementById('darkModeToggle');
+
+    // Dark Mode Toggle Logic (condensed for brevity, no changes from previous)
+    if (darkModeToggle) { 
+        const sunIcon = darkModeToggle.querySelector('.sun-icon');
+        const moonIcon = darkModeToggle.querySelector('.moon-icon');
+        const applyTheme = (theme) => {
+            if (theme === 'dark') { htmlElement.classList.add('theme--dark'); if (sunIcon) sunIcon.style.display = 'none'; if (moonIcon) moonIcon.style.display = 'block'; localStorage.setItem('theme', 'dark'); } 
+            else { htmlElement.classList.remove('theme--dark'); if (sunIcon) sunIcon.style.display = 'block'; if (moonIcon) moonIcon.style.display = 'none'; localStorage.setItem('theme', 'light'); }
+        };
+        const savedTheme = localStorage.getItem('theme');
+        const prefersDarkScheme = window.matchMedia('(prefers-color-scheme: dark)');
+        if (savedTheme) { applyTheme(savedTheme); } else { applyTheme('light'); }
+        darkModeToggle.addEventListener('click', () => {
+            localStorage.setItem('theme_user_overridden', 'true');
+            if (htmlElement.classList.contains('theme--dark')) { applyTheme('light'); } else { applyTheme('dark'); }
+        });
+        prefersDarkScheme.addEventListener('change', (e) => {
+            if (!localStorage.getItem('theme_user_overridden')) { applyTheme(e.matches ? 'dark' : 'light'); }
+        });
+    }
+
+    // Custom Lap Selector Logic
+    const customLapSelectorContainer = document.getElementById('customLapSelectorContainer');
+    const currentLapDisplay = document.getElementById('currentLapDisplay');
+    const lapDropdownList = document.getElementById('lapDropdownList');
+
+    if (customLapSelectorContainer && currentLapDisplay && lapDropdownList) {
+        const initialCurrentLap = 52;
+        const initialTotalLaps = 70;
+        let currentSelectedLapValue = initialCurrentLap;
+
+        const updateLapDisplayAndAria = (current, total) => {
+            // Construct HTML to underline only the lap number
+            currentLapDisplay.innerHTML = 
+                `<span class="lap-text-segment">Lap </span>` +
+                `<span class="lap-number-underlined">${current}</span>` +
+                `<span class="lap-text-segment">/${total}</span>`;
+            currentLapDisplay.setAttribute('aria-label', `Change lap. Current selection: Lap ${current} of ${total}`);
+        };
+
+        updateLapDisplayAndAria(initialCurrentLap, initialTotalLaps); 
+
+        lapDropdownList.innerHTML = ''; 
+        for (let i = 1; i <= initialTotalLaps; i++) {
+            const lapOption = document.createElement('div');
+            lapOption.setAttribute('role', 'option');
+            lapOption.id = `lap-option-${i}`;
+            lapOption.textContent = `Lap ${i}`;
+            lapOption.dataset.lapNumber = i; 
+            if (i === initialCurrentLap) {
+                lapOption.setAttribute('aria-selected', 'true');
+                lapDropdownList.setAttribute('aria-activedescendant', lapOption.id);
+            }
+
+            lapOption.addEventListener('click', () => {
+                currentSelectedLapValue = parseInt(lapOption.dataset.lapNumber);
+                updateLapDisplayAndAria(currentSelectedLapValue, initialTotalLaps);
+
+                const currentlySelected = lapDropdownList.querySelector('[aria-selected="true"]');
+                if (currentlySelected) currentlySelected.removeAttribute('aria-selected');
+                
+                lapOption.setAttribute('aria-selected', 'true');
+                lapDropdownList.setAttribute('aria-activedescendant', lapOption.id);
+                
+                lapDropdownList.style.display = 'none';
+                currentLapDisplay.setAttribute('aria-expanded', 'false');
+                currentLapDisplay.focus(); 
+                console.log('Selected Lap:', currentSelectedLapValue);
+            });
+            lapDropdownList.appendChild(lapOption);
+        }
+
+        currentLapDisplay.addEventListener('click', (event) => {
+            event.stopPropagation();
+            const isExpanded = currentLapDisplay.getAttribute('aria-expanded') === 'true';
+            if (isExpanded) {
+                lapDropdownList.style.display = 'none';
+                currentLapDisplay.setAttribute('aria-expanded', 'false');
+            } else {
+                lapDropdownList.style.display = 'block';
+                currentLapDisplay.setAttribute('aria-expanded', 'true');
+                const selectedOption = lapDropdownList.querySelector(`[data-lap-number="${currentSelectedLapValue}"]`) || lapDropdownList.firstChild;
+                if (selectedOption) {
+                    Array.from(lapDropdownList.querySelectorAll('[role="option"]')).forEach(opt => opt.classList.remove('focused'));
+                    selectedOption.classList.add('focused'); 
+                    selectedOption.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+                    lapDropdownList.setAttribute('aria-activedescendant', selectedOption.id);
+                }
+            }
+        });
+        
+        currentLapDisplay.addEventListener('keydown', (event) => {
+            if (event.key === 'Enter' || event.key === ' ') {
+                event.preventDefault();
+                currentLapDisplay.click();
+            } else if (event.key === 'Escape' && currentLapDisplay.getAttribute('aria-expanded') === 'true') {
+                 event.preventDefault();
+                 lapDropdownList.style.display = 'none';
+                 currentLapDisplay.setAttribute('aria-expanded', 'false');
+            }
+        });
+
+        document.addEventListener('click', (event) => {
+            if (!customLapSelectorContainer.contains(event.target) && lapDropdownList.style.display === 'block') {
+                lapDropdownList.style.display = 'none';
+                currentLapDisplay.setAttribute('aria-expanded', 'false');
+            }
+        });
+
+        lapDropdownList.addEventListener('keydown', (event) => {
+            const options = Array.from(lapDropdownList.querySelectorAll('[role="option"]'));
+            if (options.length === 0) return;
+
+            let focusedId = lapDropdownList.getAttribute('aria-activedescendant');
+            let focusedIndex = options.findIndex(opt => opt.id === focusedId);
+            
+            if (focusedIndex === -1) { // If no activedescendant, try finding selected, or default to 0
+                focusedIndex = options.findIndex(opt => opt.getAttribute('aria-selected') === 'true');
+                if (focusedIndex === -1) focusedIndex = 0;
+            }
+
+            let preventDefault = false;
+
+            if (event.key === 'ArrowDown') {
+                focusedIndex = (focusedIndex + 1) % options.length;
+                preventDefault = true;
+            } else if (event.key === 'ArrowUp') {
+                focusedIndex = (focusedIndex - 1 + options.length) % options.length;
+                preventDefault = true;
+            } else if (event.key === 'Enter' || event.key === ' ') {
+                if (focusedIndex >=0 && focusedIndex < options.length) options[focusedIndex].click();
+                preventDefault = true;
+            } else if (event.key === 'Escape') {
+                lapDropdownList.style.display = 'none';
+                currentLapDisplay.setAttribute('aria-expanded', 'false');
+                currentLapDisplay.focus();
+                preventDefault = true;
+            } else if (event.key === 'Home') {
+                focusedIndex = 0;
+                preventDefault = true;
+            } else if (event.key === 'End') {
+                focusedIndex = options.length - 1;
+                preventDefault = true;
+            }
+
+            if (preventDefault) {
+                event.preventDefault();
+                options.forEach(opt => opt.classList.remove('focused'));
+                if (options[focusedIndex]) {
+                    options[focusedIndex].classList.add('focused');
+                    lapDropdownList.setAttribute('aria-activedescendant', options[focusedIndex].id);
+                    options[focusedIndex].scrollIntoView({ block: 'nearest' });
+                }
+            }
+        });
+    }
+});
+</script>
+</body>
+</html>
