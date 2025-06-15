@@ -1,7 +1,6 @@
 {
   "name": "racetrace",
   "compatibility_date": "2025-06-15",
-  "main": "index.html",
   "site": {
     "bucket": "./"
   }
