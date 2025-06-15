@@ -3,7 +3,28 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>RaceTrace - Playback</title>
+    
+    <title>RaceTrace Playback: Relive Thrilling Race Moments & Driver Performance</title>
+    
+    <meta name="description" content="Relive the excitement of races with RaceTrace Playback. Analyze driver performance, track positions, and lap times for Lewis Hamilton, Lando Norris, and more.">
+    
+    <meta name="keywords" content="RaceTrace, race playback, racing analytics, F1 playback, motorsport, Lewis Hamilton, Lando Norris, lap times, driver performance, 3D race visualization">
+    
+    <meta property="og:title" content="RaceTrace Playback: Relive Thrilling Race Moments">
+    <meta property="og:description" content="Experience detailed race playback and analyze driver performance with interactive 3D visualizations.">
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://www.yourracewebsite.com/playback"> <meta property="og:image" content="https://www.yourracewebsite.com/images/racetrace-playback-thumbnail.jpg"> <meta property="og:image:alt" content="RaceTrace Playback interface showing racing karts on a track">
+    
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:site" content="@RaceTraceOfficial"> <meta name="twitter:creator" content="@RaceTraceOfficial"> <meta name="twitter:title" content="RaceTrace Playback: Relive Thrilling Race Moments">
+    <meta name="twitter:description" content="Experience detailed race playback and analyze driver performance with interactive 3D visualizations.">
+    <meta name="twitter:image" content="https://www.yourracewebsite.com/images/racetrace-playback-large.jpg"> <link rel="canonical" href="https://www.yourracewebsite.com/playback"> <link rel="icon" href="/favicon.ico" type="image/x-icon">
+    <link rel="shortcut icon" href="/favicon.ico" type="image/x-icon">
+    
+    <link rel="preconnect" href="https://cdn.jsdelivr.net">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    
     <style>
         /* --- Global & Session Page Styles --- */
         @import url("https://fonts.googleapis.com/css?family=DM+Sans:400,700&display=swap");
@@ -311,15 +332,13 @@
 </head>
 <body>
     <header class="page-header">
-        <h1>RaceTrace</h1>
-    </header>
+        <h1>RaceTrace Playback</h1> </header>
 
     <div class="main-container">
         <main>
             <aside class="leaderboard-area">
                 <div class="leaderboard-header">
-                    <h4 class="main-headline-title">
-                        <span class="title-line-1">FASTLANE</span>
+                    <h2 class="main-headline-title"> <span class="title-line-1">FASTLANE</span>
                         <div class="title-line-2">
                             <span class="live-race-text">Race Playback</span>
                             <div id="customLapSelectorContainer" class="custom-lap-selector-container">
@@ -329,15 +348,12 @@
                                 </div>
                             </div>
                         </div>
-                    </h4>
+                    </h2>
                 </div>
                 <table class="standings-grid">
-                    <thead class="standings-grid-header">
+                    <caption>Current Race Standings</caption> <thead class="standings-grid-header">
                         <tr class="standings-grid-header-row">
-                            <th class="standings-grid-header-cell align-text-center">Pos</th>
-                            <th class="standings-grid-header-cell">Driver</th>
-                            <th class="standings-grid-header-cell align-text-right">Time / Interval</th>
-                        </tr>
+                            <th class="standings-grid-header-cell align-text-center" scope="col">Pos</th> <th class="standings-grid-header-cell" scope="col">Driver</th> <th class="standings-grid-header-cell align-text-right" scope="col">Time / Interval</th> </tr>
                     </thead>
                     <tbody>
                         <tr class="standings-grid-data-row">
@@ -358,28 +374,23 @@
                 </table>
             </aside>
             <section class="playback-area">
-                <div id="canvas-container"></div>
-                
-                <div id="controls">
-                    <button id="birdsEyeBtn" class="control-btn">Bird's Eye View</button>
-                    <button id="kart1Btn" class="control-btn">Lewis Hamilton</button>
-                    <button id="kart2Btn" class="control-btn">Lando Norris</button>
-                    <button id="frontViewBtn" class="control-btn">Front View</button>
+                <h3>Interactive Race Playback Viewer</h3> <div id="canvas-container" aria-label="3D Race Playback Arena"></div> <div id="controls" role="group" aria-label="Race Playback Controls"> <button id="birdsEyeBtn" class="control-btn" aria-label="Bird's Eye View of the Track">Bird's Eye View</button>
+                    <button id="kart1Btn" class="control-btn" aria-label="View from Lewis Hamilton's Kart">Lewis Hamilton</button>
+                    <button id="kart2Btn" class="control-btn" aria-label="View from Lando Norris's Kart">Lando Norris</button>
+                    <button id="frontViewBtn" class="control-btn" aria-label="Front View of the Leading Kart">Front View</button>
                 </div>
 
-                <div id="timeline">
-                    <div id="timeline-controls">
-                        <button id="rewindBtn">&lt;&lt;</button>
-                        <button id="playPauseBtn">▶</button>
-                        <button id="joinBtn">↔</button>
-                        <button id="unjoinBtn">↻</button>
-                        <button id="fastForwardBtn">&gt;&gt;</button>
+                <div id="timeline" role="group" aria-label="Race Timeline Controls"> <div id="timeline-controls">
+                        <button id="rewindBtn" aria-label="Rewind Playback">&lt;&lt;</button>
+                        <button id="playPauseBtn" aria-label="Play or Pause Playback">▶</button>
+                        <button id="joinBtn" aria-label="Join Karts on Timeline">↔</button>
+                        <button id="unjoinBtn" aria-label="Unjoin Karts on Timeline">↻</button>
+                        <button id="fastForwardBtn" aria-label="Fast Forward Playback">&gt;&gt;</button>
                     </div>
                     <div id="timeline-slider-container">
                         <div id="timeline-progress"></div>
-                        <input type="range" id="timeline-slider" min="0" value="0" class="timeline-slider">
-                        <span id="timeline-time">0.00s</span>
-                    </div>
+                        <input type="range" id="timeline-slider" min="0" value="0" class="timeline-slider" aria-label="Race Playback Timeline Slider">
+                        <span id="timeline-time" aria-live="polite">0.00s</span> </div>
                 </div>
             </section>
         </main>
@@ -503,7 +514,7 @@
             const lineMaterial = new THREE.MeshBasicMaterial({
             color: 0xdddddd,
             transparent: true, // Enable transparency
-            opacity: 0.95      // 5% transparent (95% opaque)
+            opacity: 0.95        // 5% transparent (95% opaque)
             });
 
             const spacing = 50;
@@ -618,7 +629,7 @@
             function calculateInitialAngle(coords, defaultAngle = 0) {
                 if (coords && coords.length > 1) {
                     const dx = coords[1].x - coords[0].x, dy = coords[1].y - coords[0].y;
-                    if (Math.sqrt(dx * dx + dy * dy) > 0.01) return Math.atan2(dy, dx);
+                    if (Math.hypot(dx * dx + dy * dy) > 0.01) return Math.atan2(dy, dx);
                 }
                 return defaultAngle;
             }
@@ -796,11 +807,11 @@
                             leaderCurrentX = THREE.MathUtils.lerp(leaderAdjustedCoords[i].x, leaderAdjustedCoords[i + 1].x, frac);
                             leaderCurrentY = THREE.MathUtils.lerp(leaderAdjustedCoords[i].y, leaderAdjustedCoords[i + 1].y, frac);
                             const dx = leaderAdjustedCoords[i+1].x - leaderAdjustedCoords[i].x; const dy = leaderAdjustedCoords[i+1].y - leaderAdjustedCoords[i].y;
-                            if (Math.sqrt(dx*dx + dy*dy) > 0.01) leaderCurrentAngle = Math.atan2(dy, dx); else leaderCurrentAngle = (isRedCurrentlyLeader ? redTargetAngle : orangeTargetAngle);
+                            if (Math.hypot(dx, dy) > 0.01) leaderCurrentAngle = Math.atan2(dy, dx); else leaderCurrentAngle = (isRedCurrentlyLeader ? redTargetAngle : orangeTargetAngle);
                             leaderPosFound = true; break;
                         }
                     }
-                    if (!leaderPosFound) { if (elapsedTime >= leaderAdjustedCoords[leaderAdjustedCoords.length-1].time && leaderAdjustedCoords.length>0) { leaderCurrentX = leaderAdjustedCoords[leaderAdjustedCoords.length - 1].x; leaderCurrentY = leaderAdjustedCoords[leaderAdjustedCoords.length - 1].y; if (leaderAdjustedCoords.length > 1) { const dx = leaderAdjustedCoords[leaderAdjustedCoords.length-1].x - leaderAdjustedCoords[leaderAdjustedCoords.length-2].x; const dy = leaderAdjustedCoords[leaderAdjustedCoords.length-1].y - leaderAdjustedCoords[leaderAdjustedCoords.length-2].y; if (Math.sqrt(dx*dx + dy*dy) > 0.01) leaderCurrentAngle = Math.atan2(dy, dx); else leaderCurrentAngle = (isRedCurrentlyLeader ? redTargetAngle : orangeTargetAngle); } else { leaderCurrentAngle = (isRedCurrentlyLeader ? redTargetAngle : orangeTargetAngle); }} else if (leaderAdjustedCoords.length>0) { leaderCurrentX = leaderAdjustedCoords[0].x; leaderCurrentY = leaderAdjustedCoords[0].y; if (leaderAdjustedCoords.length > 1) { const dx = leaderAdjustedCoords[1].x - leaderAdjustedCoords[0].x; const dy = leaderAdjustedCoords[1].y - leaderAdjustedCoords[0].y; if (Math.sqrt(dx*dx + dy*dy) > 0.01) leaderCurrentAngle = Math.atan2(dy, dx); else leaderCurrentAngle = (isRedCurrentlyLeader ? redTargetAngle : orangeTargetAngle); } else { leaderCurrentAngle = (isRedCurrentlyLeader ? redTargetAngle : orangeTargetAngle); }} else return; }
+                    if (!leaderPosFound) { if (elapsedTime >= leaderAdjustedCoords[leaderAdjustedCoords.length-1].time && leaderAdjustedCoords.length>0) { leaderCurrentX = leaderAdjustedCoords[leaderAdjustedCoords.length - 1].x; leaderCurrentY = leaderAdjustedCoords[leaderAdjustedCoords.length - 1].y; if (leaderAdjustedCoords.length > 1) { const dx = leaderAdjustedCoords[leaderAdjustedCoords.length-1].x - leaderAdjustedCoords[leaderAdjustedCoords.length-2].x; const dy = leaderAdjustedCoords[leaderAdjustedCoords.length-1].y - leaderAdjustedCoords[leaderAdjustedCoords.length-2].y; if (Math.hypot(dx, dy) > 0.01) leaderCurrentAngle = Math.atan2(dy, dx); else leaderCurrentAngle = (isRedCurrentlyLeader ? redTargetAngle : orangeTargetAngle); } else { leaderCurrentAngle = (isRedCurrentlyLeader ? redTargetAngle : orangeTargetAngle); }} else if (leaderAdjustedCoords.length>0) { leaderCurrentX = leaderAdjustedCoords[0].x; leaderCurrentY = leaderAdjustedCoords[0].y; if (leaderAdjustedCoords.length > 1) { const dx = leaderAdjustedCoords[1].x - leaderAdjustedCoords[0].x; const dy = leaderAdjustedCoords[1].y - leaderAdjustedCoords[0].y; if (Math.hypot(dx, dy) > 0.01) leaderCurrentAngle = Math.atan2(dy, dx); else leaderCurrentAngle = (isRedCurrentlyLeader ? redTargetAngle : orangeTargetAngle); } else { leaderCurrentAngle = (isRedCurrentlyLeader ? redTargetAngle : orangeTargetAngle); }} else return; }
                 } else return;
                 let minDistanceSq = Infinity; let closestPointIndexOnFollowerOriginalPath = 0; let followerNewStartX, followerNewStartY;
                 for (let i = 0; i < followerOriginalCoords.length; i++) { const pt = followerOriginalCoords[i]; const dx = pt.x - leaderCurrentX; const dy = pt.y - leaderCurrentY; const distanceSq = dx * dx + dy * dy; if (distanceSq < minDistanceSq) { minDistanceSq = distanceSq; closestPointIndexOnFollowerOriginalPath = i; followerNewStartX = pt.x; followerNewStartY = pt.y; }}
@@ -808,7 +819,7 @@
                 const newFollowerPath = []; newFollowerPath.push({ x: followerNewStartX, y: followerNewStartY, time: elapsedTime }); let lastTimeInNewPath = elapsedTime;
                 for (let i = 1; i < followerOriginalCoords.length; i++) { const currentOriginalIdx = (closestPointIndexOnFollowerOriginalPath + i) % followerOriginalCoords.length; const prevOriginalIdx = (closestPointIndexOnFollowerOriginalPath + i - 1 + followerOriginalCoords.length) % followerOriginalCoords.length; const originalPoint = followerOriginalCoords[currentOriginalIdx]; const prevOriginalPoint = followerOriginalCoords[prevOriginalIdx]; let timeInterval = originalPoint.time - prevOriginalPoint.time; if (timeInterval < 0) timeInterval += followerLapDuration; timeInterval = Math.max(0.001, timeInterval); const newTime = lastTimeInNewPath + timeInterval; newFollowerPath.push({ x: originalPoint.x, y: originalPoint.y, time: newTime }); lastTimeInNewPath = newTime; }
                 newFollowerPath.sort((a, b) => a.time - b.time);
-                let newFollowerAngleForVisuals; if (newFollowerPath.length > 1) { const dx = newFollowerPath[1].x - newFollowerPath[0].x; const dy = newFollowerPath[1].y - newFollowerPath[0].y; newFollowerAngleForVisuals = (Math.sqrt(dx*dx+dy*dy) > 0.01) ? Math.atan2(dy, dx) : leaderCurrentAngle; } else { newFollowerAngleForVisuals = leaderCurrentAngle; }
+                let newFollowerAngleForVisuals; if (newFollowerPath.length > 1) { const dx = newFollowerPath[1].x - newFollowerPath[0].x; const dy = newFollowerPath[1].y - newFollowerPath[0].y; newFollowerAngleForVisuals = (Math.hypot(dx, dy) > 0.01) ? Math.atan2(dy, dx) : leaderCurrentAngle; } else { newFollowerAngleForVisuals = leaderCurrentAngle; }
                 followerKartBlock.position.set(followerNewStartX, followerNewStartY, 0.67); followerKartBlock.rotation.y = newFollowerAngleForVisuals + rotationOffset;
                 if (isRedCurrentlyLeader) {
                     adjustedOrangeCoords = newFollowerPath;
